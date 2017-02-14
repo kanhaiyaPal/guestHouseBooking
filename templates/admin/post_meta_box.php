@@ -27,19 +27,19 @@
 		<tr>
 			<td><strong>Available Rooms</strong></td>
 			<td><input type="checkbox" name="room_cat_single" value="singlebed" <?php if($single_bed_room){ echo "checked"; } ?>  onclick='GHOB_handle_metabox_Click(this);' />Single Bed Rooms</td>
-			<td><input id="singlebed_roomcount" style="display:<?php if($single_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="singlebed_count" placeholder="Number of Beds" value="<?php echo ($single_bed_room >0)?$single_bed_room:''; ?>"  /></td>
+			<td><input id="singlebed_roomcount" style="display:<?php if($single_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="singlebed_count" placeholder="Number of Rooms" value="<?php echo ($single_bed_room >0)?$single_bed_room:''; ?>"  /></td>
 			<td><input id="singlebed_roomprice" style="display:<?php if($single_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="singlebed_rate" placeholder="Price" value="<?php echo $single_bed_cost; ?>"  /></td>
 		</tr>
 		<tr>
 			<td>&nbsp;</td>
 			<td><input type="checkbox" name="room_cat_double" value="doublebed" <?php if($double_bed_room){ echo "checked"; } ?>  onclick='GHOB_handle_metabox_Click(this);' />Double Bed Rooms</td>
-			<td><input id="doublebed_roomcount" style="display:<?php if($double_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="doublebed_count" placeholder="Number of Beds" value="<?php echo ($double_bed_room >0)?$double_bed_room:''; ?>" /></td>
+			<td><input id="doublebed_roomcount" style="display:<?php if($double_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="doublebed_count" placeholder="Number of Rooms" value="<?php echo ($double_bed_room >0)?$double_bed_room:''; ?>" /></td>
 			<td><input id="doublebed_roomprice" style="display:<?php if($double_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="doublebed_rate" placeholder="Price" value="<?php echo $double_bed_cost; ?>" /></td>
 		</tr>
 		<tr>
 			<td>&nbsp;</td>
 			<td><input type="checkbox" name="room_cat_triple" value="triplebed" <?php if($triple_bed_room){ echo "checked"; } ?>  onclick='GHOB_handle_metabox_Click(this);' />Triple Bed Rooms</td>
-			<td><input id="triplebed_roomcount" style="display:<?php if($triple_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="triplebed_count" placeholder="Number of Beds" value="<?php echo ($triple_bed_room >0)?$triple_bed_room:''; ?>" /></td>
+			<td><input id="triplebed_roomcount" style="display:<?php if($triple_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="triplebed_count" placeholder="Number of Rooms" value="<?php echo ($triple_bed_room >0)?$triple_bed_room:''; ?>" /></td>
 			<td><input id="triplebed_roomprice" style="display:<?php if($triple_bed_room){echo "block";}else{echo "none";} ?>" type="text" name="triplebed_rate" placeholder="Price" value="<?php echo $triple_bed_cost; ?>" /></td>
 		</tr>
 		<tr><td colspan="4">&nbsp;</td></tr>

@@ -5,7 +5,7 @@ class GHOB_post_type_guest_house_init {
 		/*initialize custom post type hook*/
 		add_action( 'init', array( $this, 'create_guest_house_post') );
 		
-		/*Custom Meta Box for entering details of Guest House*/
+		/*Custom Meta Box for entering details and gallery of Guest House*/
 		add_action( 'admin_init', array( $this, 'create_meta_box_guest_house') ); 
 		
 		/*Save custom meta box data*/
@@ -54,11 +54,23 @@ class GHOB_post_type_guest_house_init {
 			array( $this, 'display_guest_house_details_meta_box'),
 			'guest_house', 'normal', 'high'
 		);
+		
+		/*Add Guest House Gallery Box*/
+		add_meta_box( 'guest_house_gallery_meta_box',
+			'Guest House Gallery',
+			array( $this, 'display_guest_house_gallery_meta_box'),
+			'guest_house', 'normal', 'high'
+		);
 	}
 	
 	function display_guest_house_details_meta_box($guest_house_details)
 	{
 		require_once GHOB_PLUGIN_DIR . '/templates/admin/post_meta_box.php';
+	}
+	
+	function display_guest_house_gallery_meta_box($guest_house_details)
+	{
+		require_once GHOB_PLUGIN_DIR . '/templates/admin/post_meta_gallery_box.php';
 	}
 	
 	function add_guest_house_details_fields($guest_house_details_id, $guest_house_details)
@@ -87,11 +99,20 @@ class GHOB_post_type_guest_house_init {
 				update_post_meta( $guest_house_details_id, 'triplebedprice', '' );
 			}
 			
+			/*Saving room amenities settings*/
 			if( isset($_POST['room_amenities']) && is_array($_POST['room_amenities']) ) {
 				$amenities_list = implode(',', $_POST['room_amenities']);
 				update_post_meta($guest_house_details_id, 'guest_house_amenities', $amenities_list);
 			}else{
 				update_post_meta($guest_house_details_id, 'guest_house_amenities', '');
+			}
+			
+			/*Saving gallery images*/
+			if( isset($_POST['guest_house_gallery']) && is_array($_POST['guest_house_gallery']) ) {
+				$amenities_list = implode(',', $_POST['guest_house_gallery']);
+				update_post_meta($guest_house_details_id, 'guest_house_gallery', $amenities_list);
+			}else{
+				update_post_meta($guest_house_details_id, 'guest_house_gallery', '');
 			}
 		}
 	}
@@ -114,7 +135,7 @@ class GHOB_post_type_guest_house_init {
 	function create_guesthouse_hierarchical_taxonomy() {
 
 		/*Register Guest House City Taxonomy*/
-		$labels = array(
+		$labels_city = array(
 			'name' => _x( 'Guest House City', 'taxonomy general name' ),
 			'singular_name' => _x( 'Guest House City', 'taxonomy singular name' ),
 			'search_items' =>  __( 'Search Guest House City' ),
@@ -130,7 +151,7 @@ class GHOB_post_type_guest_house_init {
 
 		register_taxonomy('Guest_House_City','guest_house', array(
 			'hierarchical' => true,
-			'labels' => $labels,
+			'labels' => $labels_city,
 			'show_ui' => true,
 			'show_admin_column' => true,
 			'query_var' => true,
@@ -138,7 +159,7 @@ class GHOB_post_type_guest_house_init {
 		));
 
 		/*Register Guest House Location Taxonomy*/
-		$labels = array(
+		$labels_location = array(
 			'name' => _x( 'Guest House Location', 'taxonomy general name' ),
 			'singular_name' => _x( 'Guest House Location', 'taxonomy singular name' ),
 			'search_items' =>  __( 'Search Guest Location City' ),
@@ -154,7 +175,7 @@ class GHOB_post_type_guest_house_init {
 
 		register_taxonomy('Guest_House_Location','guest_house', array(
 			'hierarchical' => true,
-			'labels' => $labels,
+			'labels' => $labels_location,
 			'show_ui' => true,
 			'show_admin_column' => true,
 			'query_var' => true,
