@@ -1,9 +1,17 @@
 <?php
+
+if ( !defined( 'ABSPATH' ) ) {
+	exit();
+}
+
 class GHOB_post_type_guest_house_init {	
 	public function __construct()
     {
 		/*initialize custom post type hook*/
 		add_action( 'init', array( $this, 'create_guest_house_post') );
+		
+		/*enqueue js for guest house booking details and gallery uploads*/
+		add_action( 'admin_enqueue_scripts', array($this, 'admin_custom_post_js') );
 		
 		/*Custom Meta Box for entering details and gallery of Guest House*/
 		add_action( 'admin_init', array( $this, 'create_meta_box_guest_house') ); 
@@ -16,7 +24,9 @@ class GHOB_post_type_guest_house_init {
 		
 		/*register custom taxonomy for guest-house post*/
 		add_action( 'init',  array( $this, 'create_guesthouse_hierarchical_taxonomy'), 0 ); 
+		
 	}
+	
 	function create_guest_house_post()
 	{
 		register_post_type( 'guest_house',
@@ -77,6 +87,10 @@ class GHOB_post_type_guest_house_init {
 	{
 		if($guest_house_details->post_type == 'guest_house'){
 			
+			if ( !current_user_can( 'manage_options' ) )  {
+				wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+			}
+			
 			if ( isset( $_POST['room_cat_single'] ) && $_POST['room_cat_single'] != '' ) {
 				update_post_meta( $guest_house_details_id, 'singlebed', $_POST['singlebed_count'] );
 				update_post_meta( $guest_house_details_id, 'singlebedprice', $_POST['singlebed_rate'] );
@@ -87,16 +101,20 @@ class GHOB_post_type_guest_house_init {
 			if ( isset( $_POST['room_cat_double'] ) && $_POST['room_cat_double'] != '' ) {
 				update_post_meta( $guest_house_details_id, 'doublebed', $_POST['doublebed_count'] );
 				update_post_meta( $guest_house_details_id, 'doublebedprice', $_POST['doublebed_rate'] );
+				update_post_meta( $guest_house_details_id, 'doubleroomprice', $_POST['doubleroom_rate'] );
 			}else{
 				update_post_meta( $guest_house_details_id, 'doublebed', '' );
 				update_post_meta( $guest_house_details_id, 'doublebedprice', '' );
+				update_post_meta( $guest_house_details_id, 'doubleroomprice', '' );
 			}
 			if ( isset( $_POST['room_cat_triple'] ) && $_POST['room_cat_triple'] != '' ) {
 				update_post_meta( $guest_house_details_id, 'triplebed', $_POST['triplebed_count'] );
 				update_post_meta( $guest_house_details_id, 'triplebedprice', $_POST['triplebed_rate'] );
+				update_post_meta( $guest_house_details_id, 'tripleroomprice', $_POST['tripleroom_rate'] );
 			}else{
 				update_post_meta( $guest_house_details_id, 'triplebed', '' );
 				update_post_meta( $guest_house_details_id, 'triplebedprice', '' );
+				update_post_meta( $guest_house_details_id, 'tripleroomprice','');
 			}
 			
 			/*Saving room amenities settings*/
@@ -181,6 +199,22 @@ class GHOB_post_type_guest_house_init {
 			'query_var' => true,
 			'rewrite' => array( 'slug' => 'guest_house_location' ),
 		));
+	}
+	
+	function admin_custom_post_js($hook) {
+
+		$cpt = 'guest_house';
+
+		if( in_array($hook, array('post.php', 'post-new.php') ) ){
+			$screen = get_current_screen();
+
+			if( is_object( $screen ) && $cpt == $screen->post_type ){
+
+				// Register, enqueue scripts and styles here
+				wp_enqueue_script( 'custom-post-guest-house-js',plugins_url( '../assets/js/admin/custom-post-guest-house.js', __FILE__) );
+			}
+		}
+		
 	}
 }
 
