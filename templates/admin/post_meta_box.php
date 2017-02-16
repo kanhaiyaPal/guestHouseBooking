@@ -24,6 +24,11 @@ if ( !defined( 'ABSPATH' ) ) {
 	$guest_house_amenities = get_post_meta( $guest_house_details->ID, 'guest_house_amenities', true );
 	$guest_house_amenitites_array = explode(',',$guest_house_amenities);
 	
+	/*Room numbers html generation*/
+	$single_room_input_number = $this->GHOB_room_number_html_generator('single',$guest_house_details->ID);
+	$double_room_input_number = $this->GHOB_room_number_html_generator('double',$guest_house_details->ID);
+	$triple_room_input_number = $this->GHOB_room_number_html_generator('triple',$guest_house_details->ID);
+	
     ?>
 
     <table style="width:100%">
@@ -57,6 +62,7 @@ if ( !defined( 'ABSPATH' ) ) {
 				<label id="triplebed_total"><?php if($triple_bed_room){ echo 'Total Beds:'.$triple_bed_room*3; } ?></label>
 			</td>
 		</tr>
+		<tr><td colspan="5">&nbsp;</td></tr>
 		<tr>
 			<td><input id="custom_guest_house_generate_rooms" type="button" value="Generate Rooms"/></td>
 			<td colspan="4">&nbsp;</td>
@@ -64,6 +70,24 @@ if ( !defined( 'ABSPATH' ) ) {
 		<tr><td colspan="5">&nbsp;</td></tr>
 		
 		<!--Room Type Input Ends-->
+		
+		<tr>
+			<td colspan="5" id="ghob_input_single_room_numbers">
+				<?php echo $single_room_input_number; ?>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="5" id="ghob_input_double_room_numbers">
+				<?php echo $double_room_input_number; ?>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="5" id="ghob_input_triple_room_numbers">
+				<?php echo $triple_room_input_number; ?>
+			</td>
+		</tr>
+		
+		<!--Room Number Input Ends-->
 		<tr>
 			<td colspan="5">
 				<table width="100%">

@@ -22,7 +22,7 @@ function GHOB_handle_metabox_Click(cb){
 function GHOB_calculate_total(bedtype){
 	var present_val = document.getElementById(bedtype+"_roomcount").value;
 	var label_id = document.getElementById(bedtype+"_total");
-	if((present_val!='')&&(!isNaN(present_val))){
+	if((present_val!='')&&(GHOB_inst.isNumeric(present_val))){
 		switch(bedtype){
 			case 'singlebed':{ label_id.innerHTML = 'Total Beds:'+parseInt(present_val)*1; break; }
 			case 'doublebed':{ label_id.innerHTML = 'Total Beds:'+parseInt(present_val)*2; break; }
@@ -41,7 +41,7 @@ function GHOB_calculate_total(bedtype){
  */ 
 function GHOB_copy_singlebed_price(fl)
 {
-	if((fl.value!='')&&(!isNaN(fl.value)))
+	if((fl.value!='')&&(GHOB_inst.isNumeric(fl.value)))
 	document.getElementById("singlebed_roomprice").value = fl.value;
 	else{
 		if(fl.value!='')
@@ -60,27 +60,50 @@ function GHOIB_room_generator_validate(){
 	if((single_ghob.is(':checked'))||(double_ghob.is(':checked'))||(triple_ghob.is(':checked')))
 	{
 		if(single_ghob.is(':checked')){
-			var single_bed_count = GHOB_inst("input[name='singlebed_count']").value;;
-			var single_bed_rate = GHOB_inst("input[name='singlebed_rate']").value;
-			if(GHOB_inst.trim(single_bed_count).length && GHOB_inst.isNumeric(single_bed_count) && (single_bed_count % 1 != 0)){  
-				error_string += 'Please check the input value in Number of Bed field of Single Beds';
+			var single_bed_count = GHOB_inst("input[name='singlebed_count']").val();
+			var single_bed_rate = GHOB_inst("input[name='singlebed_rate']").val();
+			if(!(GHOB_inst.trim(single_bed_count).length && GHOB_inst.isNumeric(single_bed_count) && (single_bed_count % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Number of Bed field of Single Beds';
 			}
-			if(GHOB_inst.trim(single_bed_rate).length && GHOB_inst.isNumeric(single_bed_rate) && (single_bed_rate % 1 != 0)){  
-				error_string += 'Please check the input value in Price of Bed field of Single Beds';
+			if(!(GHOB_inst.trim(single_bed_rate).length && GHOB_inst.isNumeric(single_bed_rate) && (single_bed_rate % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Price of Bed field of Single Beds';
 			}
 		}
 		if(double_ghob.is(':checked')){
-			var GHOB_inst("input[name='doublebed_count']");
-			var GHOB_inst("input[name='doublebed_rate']");
-			var GHOB_inst("input[name='doubleroom_rate']");
+				
+			var double_bed_count = GHOB_inst("input[name='doublebed_count']").val();
+			var double_bed_rate = GHOB_inst("input[name='doublebed_rate']").val();
+			var double_bed_room = GHOB_inst("input[name='doubleroom_rate']").val();
+			
+			if(!(GHOB_inst.trim(double_bed_count).length && GHOB_inst.isNumeric(double_bed_count) && (double_bed_count % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Number of Bed field of Double Beds';
+			}
+			if(!(GHOB_inst.trim(double_bed_rate).length && GHOB_inst.isNumeric(double_bed_rate) && (double_bed_rate % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Price of Bed field of Double Beds';
+			}
+			if(!(GHOB_inst.trim(double_bed_room).length && GHOB_inst.isNumeric(double_bed_room) && (double_bed_room % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Price of Room field of Double Beds';
+			}
 		}
 		if(triple_ghob.is(':checked')){
-			var GHOB_inst("input[name='triplebed_count']");
-			var GHOB_inst("input[name='triplebed_rate']");
-			var GHOB_inst("input[name='tripleroom_rate']");
+			
+			var triple_bed_count = GHOB_inst("input[name='triplebed_count']").val();
+			var triple_bed_rate = GHOB_inst("input[name='triplebed_rate']").val();
+			var triple_bed_room = GHOB_inst("input[name='tripleroom_rate']").val();
+			
+			if(!(GHOB_inst.trim(triple_bed_count).length && GHOB_inst.isNumeric(triple_bed_count) && (triple_bed_count % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Number of Bed field of Triple Beds';
+			}
+			if(!(GHOB_inst.trim(triple_bed_rate).length && GHOB_inst.isNumeric(triple_bed_rate) && (triple_bed_rate % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Price of Bed field of Triple Beds';
+			}
+			if(!(GHOB_inst.trim(triple_bed_room).length && GHOB_inst.isNumeric(triple_bed_room) && (triple_bed_room % 1 == 0))){  
+				error_string += '\n\u21D2Please check the input value in Price of Room field of Triple Beds';
+			}
 		}
 	}else{
 		alert('Please select atleast one type of room to generate rooms');
+		return false;
 	}
 	
 	if(error_string.length >0){
@@ -90,6 +113,65 @@ function GHOIB_room_generator_validate(){
 		return true;
 	}
 }
+
+/*
+ * functions to generate html fields for single room numbers field
+ */
+function GHOIB_generate_rooms_html($roomtype)
+{
+	var room = '';
+	var room_text = '';
+	
+	switch($roomtype){
+		case 'single':{	room='single'; room_text='Single'; break; }
+		case 'double':{ room='double'; room_text='Double'; break; }
+		case 'triple':{ room='triple'; room_text='Triple'; break; }
+	}
+
+	if(GHOB_inst('td#ghob_input_'+room+'_room_numbers').children().length != 0){
+		//check if room is added or deleted
+		var room_number_entry_table = GHOB_inst('td#ghob_input_'+room+'_room_numbers table tr:nth-child(2) td');
+		var old_rooms_count = GHOB_inst('td#ghob_input_'+room+'_room_numbers table tr:nth-child(2) td span').children('input').length;
+		var new_rooms_count = parseInt(GHOB_inst("input[name='"+room+"bed_count']").val());
+		var addition_field_html = '';
+		
+		if(old_rooms_count != new_rooms_count){
+			if(old_rooms_count > new_rooms_count){
+				//remove some room WITH CAUTION
+				/*VIEW DEVELOPMENT NOTES: NOTE NO. 1*/
+				var difference_room_count_up = old_rooms_count - new_rooms_count;
+				for(k = 0; k < difference_room_count_up*2; k++) { 
+					room_number_entry_table.last().remove();
+				}
+			}
+			if(old_rooms_count < new_rooms_count){
+				//add new rooms
+				var difference_room_count = new_rooms_count - old_rooms_count;
+				for(j = 0; j < difference_room_count; j++) { 
+					addition_field_html += '<span><input type="text" name="'+room+'_bedrooms_numbers[]" value="" required/></span><span>&nbsp;</span>';
+				}
+				room_number_entry_table.append(addition_field_html);
+			}
+		}
+		//if(addition no issues just append a new input span to existing table)
+		//if (deletion of field)
+		//     |-> Check whether any room number is booked or not
+		//                         |-> If booked don't allow to delete the room
+		//	   |-> If no room is booked for section remove entries from last 
+	}else{
+		//cell is empty
+		var field_html = '';
+		field_html += '<table><tr><td><strong>'+room_text+' Bed Rooms</strong><br/><hr/></td></tr>';
+		field_html += '<tr><td>';
+		for(i = 0; i < parseInt(GHOB_inst("input[name='"+room+"bed_count']").val()); i++) { 
+			field_html += '<span><input type="text" name="'+room+'_bedrooms_numbers[]" value="" required/></span><span>&nbsp;</span>';
+		}
+		field_html += '</td></tr>';
+		field_html += '</table>';
+		GHOB_inst('td#ghob_input_'+room+'_room_numbers').html(field_html);
+	}
+}
+
 
 GHOB_inst( document ).ready(function() {
 	/*
@@ -135,8 +217,18 @@ GHOB_inst( document ).ready(function() {
 	GHOB_inst('#custom_guest_house_generate_rooms').click(function(event){
 		event.preventDefault();
 		
+		var single_ghob = GHOB_inst("input[name='room_cat_single']");
+		var double_ghob = GHOB_inst("input[name='room_cat_double']");
+		var triple_ghob = GHOB_inst("input[name='room_cat_triple']");
+		
+		
 		//validate the entries
-		GHOIB_room_generator_validate();
+		var val_result = GHOIB_room_generator_validate();
+		if(val_result){
+			if(single_ghob.is(':checked')){	GHOIB_generate_rooms_html('single');	}
+			if(double_ghob.is(':checked')){	GHOIB_generate_rooms_html('double');	}
+			if(triple_ghob.is(':checked')){	GHOIB_generate_rooms_html('triple');	}
+		}
 	});
 
 	/*--closing document ready--*/

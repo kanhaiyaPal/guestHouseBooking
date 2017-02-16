@@ -132,6 +132,29 @@ class GHOB_post_type_guest_house_init {
 			}else{
 				update_post_meta($guest_house_details_id, 'guest_house_gallery', '');
 			}
+			
+			/*Saving room numbers*/
+			//single
+			if( isset($_POST['single_bedrooms_numbers']) && is_array($_POST['single_bedrooms_numbers']) ) {
+				$single_room_list = implode(',', $_POST['single_bedrooms_numbers']);
+				update_post_meta($guest_house_details_id, 'singlebedroomsnumbers', $single_room_list);
+			}else{
+				update_post_meta($guest_house_details_id, 'singlebedroomsnumbers', '');
+			}
+			//double
+			if( isset($_POST['double_bedrooms_numbers']) && is_array($_POST['double_bedrooms_numbers']) ) {
+				$double_room_list = implode(',', $_POST['double_bedrooms_numbers']);
+				update_post_meta($guest_house_details_id, 'doublebedroomsnumbers', $double_room_list);
+			}else{
+				update_post_meta($guest_house_details_id, 'doublebedroomsnumbers', '');
+			}
+			//triple
+			if( isset($_POST['triple_bedrooms_numbers']) && is_array($_POST['triple_bedrooms_numbers']) ) {
+				$triple_room_list = implode(',', $_POST['triple_bedrooms_numbers']);
+				update_post_meta($guest_house_details_id, 'triplebedroomsnumbers', $triple_room_list);
+			}else{
+				update_post_meta($guest_house_details_id, 'triplebedroomsnumbers', '');
+			}
 		}
 	}
 	
@@ -154,51 +177,28 @@ class GHOB_post_type_guest_house_init {
 
 		/*Register Guest House City Taxonomy*/
 		$labels_city = array(
-			'name' => _x( 'Guest House City', 'taxonomy general name' ),
-			'singular_name' => _x( 'Guest House City', 'taxonomy singular name' ),
-			'search_items' =>  __( 'Search Guest House City' ),
-			'all_items' => __( 'All Guest House City' ),
-			'parent_item' => __( 'Parent Guest House City' ),
-			'parent_item_colon' => __( 'Parent Guest House City:' ),
-			'edit_item' => __( 'Edit Guest House City' ), 
-			'update_item' => __( 'Update Guest House City' ),
-			'add_new_item' => __( 'Add New Guest House City' ),
-			'new_item_name' => __( 'New Guest House City Name' ),
-			'menu_name' => __( 'Guest House City' ),
+			'name' => _x( 'Manage City and Locations', 'taxonomy general name' ),
+			'singular_name' => _x( 'Guest House City/Location', 'taxonomy singular name' ),
+			'search_items' =>  __( 'Search Guest House City/Location' ),
+			'all_items' => __( 'All Guest House City/Location' ),
+			'parent_item' => __( 'Parent Guest House City/Location' ),
+			'parent_item_colon' => __( 'Parent Guest House City/Location:' ),
+			'edit_item' => __( 'Edit Guest House City/Location' ), 
+			'update_item' => __( 'Update Guest House City/Location' ),
+			'add_new_item' => __( 'Add New Guest House City/Location' ),
+			'new_item_name' => __( 'New Guest House City Name/Location' ),
+			'menu_name' => __( 'Guest House City/Location' ),
 		); 	
 
-		register_taxonomy('Guest_House_City','guest_house', array(
+		register_taxonomy('GHOB_City_Location','guest_house', array(
 			'hierarchical' => true,
 			'labels' => $labels_city,
 			'show_ui' => true,
 			'show_admin_column' => true,
 			'query_var' => true,
-			'rewrite' => array( 'slug' => 'guest_house_city' ),
+			'rewrite' => array( 'slug' => 'ghob_city_location' ),
 		));
 
-		/*Register Guest House Location Taxonomy*/
-		$labels_location = array(
-			'name' => _x( 'Guest House Location', 'taxonomy general name' ),
-			'singular_name' => _x( 'Guest House Location', 'taxonomy singular name' ),
-			'search_items' =>  __( 'Search Guest Location City' ),
-			'all_items' => __( 'All Guest House Location' ),
-			'parent_item' => __( 'Parent Guest House Location' ),
-			'parent_item_colon' => __( 'Parent Guest House Location:' ),
-			'edit_item' => __( 'Edit Guest House Location' ), 
-			'update_item' => __( 'Update Guest House Location' ),
-			'add_new_item' => __( 'Add New Guest House Location' ),
-			'new_item_name' => __( 'New Guest House Location Name' ),
-			'menu_name' => __( 'Guest House Location' ),
-		); 	
-
-		register_taxonomy('Guest_House_Location','guest_house', array(
-			'hierarchical' => true,
-			'labels' => $labels_location,
-			'show_ui' => true,
-			'show_admin_column' => true,
-			'query_var' => true,
-			'rewrite' => array( 'slug' => 'guest_house_location' ),
-		));
 	}
 	
 	function admin_custom_post_js($hook) {
@@ -215,6 +215,48 @@ class GHOB_post_type_guest_house_init {
 			}
 		}
 		
+	}
+	
+	function GHOB_room_number_html_generator($roomtype,$guest_house_id){
+		
+		$bedroom_numbers = '';
+		$room_html = '';
+		$room_type_name = '';
+		$room_field_name = '';
+		
+		switch($roomtype){
+			case 'single':{ 
+				$bedroom_numbers = get_post_meta( $guest_house_id, 'singlebedroomsnumbers', true ); 
+				$room_type_name = 'Single Bed Rooms'; 
+				$room_field_name = 'single';
+				break;
+			} 	 
+			case 'double':{	
+				$bedroom_numbers = get_post_meta( $guest_house_id, 'doublebedroomsnumbers', true ); 
+				$room_type_name = 'Double Bed Rooms';
+				$room_field_name = 'double';
+				break;
+			} 
+			case 'triple':{ 
+				$bedroom_numbers = get_post_meta( $guest_house_id, 'triplebedroomsnumbers', true ); 
+				$room_type_name = 'Triple Bed Rooms';
+				$room_field_name = 'triple';
+				break;
+			} 
+		}
+		if(!empty($bedroom_numbers)){
+			$bedroom_numbers_array = explode(',',$bedroom_numbers);
+			$room_html .= '<table width="100%"><tr><td><strong>'.$room_type_name.'</strong><br/><hr/></td></tr>';
+			$room_html .=  '<tr><td>';
+			foreach($bedroom_numbers_array as $sn_room_no){
+				
+				$room_html .=  '<span><input type="text" name="'.$room_field_name.'_bedrooms_numbers[]" value="'.$sn_room_no.'" /></span><span>&nbsp;</span>';
+				
+			}
+			$room_html .=  '</td></tr>';
+			$room_html .= '</table>';
+		}
+		return $room_html;
 	}
 }
 
