@@ -139,9 +139,10 @@ function GHOIB_generate_rooms_html($roomtype)
 			if(old_rooms_count > new_rooms_count){
 				//remove some room WITH CAUTION
 				/*VIEW DEVELOPMENT NOTES: NOTE NO. 1*/
+				/*this is done for temporary basis*/
 				var difference_room_count_up = old_rooms_count - new_rooms_count;
 				for(k = 0; k < difference_room_count_up*2; k++) { 
-					room_number_entry_table.last().remove();
+					GHOB_inst('td#ghob_input_'+room+'_room_numbers table tr:nth-child(2) td span:last-child').remove();
 				}
 			}
 			if(old_rooms_count < new_rooms_count){

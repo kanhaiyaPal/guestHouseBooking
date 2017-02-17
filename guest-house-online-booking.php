@@ -15,5 +15,10 @@ define( 'GHOB_PLUGIN', __FILE__ );
 
 define( 'GHOB_PLUGIN_DIR', untrailingslashit( dirname( GHOB_PLUGIN ) ) );
 
+
+/*include all activation scripts*/
+include_once GHOB_PLUGIN_DIR. '/includes/admin/class-ghob-plugin-activation.php';;
+register_activation_hook( __FILE__, array( 'GHOIB_plugin_activation', 'create_GHOB_plugin_database_table' ) );
+
 require_once GHOB_PLUGIN_DIR . '/includes/init_plugin.php';
 ?>
