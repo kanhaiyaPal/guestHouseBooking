@@ -25,6 +25,9 @@ class GHOB_post_type_guest_house_init {
 		/*register custom taxonomy for guest-house post*/
 		add_action( 'init',  array( $this, 'create_guesthouse_hierarchical_taxonomy'), 0 ); 
 		
+		/*For Booking slots and room mapping class*/
+		require_once GHOB_PLUGIN_DIR . '/includes/class-booking-slot-table.php';
+		
 	}
 	
 	function create_guest_house_post()
@@ -154,6 +157,16 @@ class GHOB_post_type_guest_house_init {
 				update_post_meta($guest_house_details_id, 'triplebedroomsnumbers', $triple_room_list);
 			}else{
 				update_post_meta($guest_house_details_id, 'triplebedroomsnumbers', '');
+			}
+			
+			/*update booking slots and room mapping*/
+			$booking_slots_mapping_obj = new GHOIB_booking_slot_table();
+			$data_already_exist = $booking_slots_mapping_obj->detect_existing_slots($guest_house_details_id);
+			if($data_already_exist){
+				$booking_slots_mapping_obj->create_new_booking_slots_first_time($guest_house_details_id);
+				$booking_slots_mapping_obj->generate_room_map_first_time($guest_house_details_id);
+			}else{
+				$booking_slots_mapping_obj->modify_booking_slots($guest_house_details_id);
 			}
 		}
 	}

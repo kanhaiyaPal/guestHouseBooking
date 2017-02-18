@@ -11,8 +11,13 @@ class GHOIB_plugin_activation{
 
 		$tblname = 'booking_slots';
 		$wp_track_table = $table_prefix . "$tblname ";
-		$charset_collate = $wpdb->get_charset_collate();
 		
+		$room_mapping = 'room_mapping';
+		$wp_room_map_table = $table_prefix . "$room_mapping ";
+		
+		$charset_collate = $wpdb->get_charset_collate();
+		require_once(ABSPATH . '/wp-admin/upgrade-functions.php');
+		require_once(ABSPATH . '/wp-admin/includes/upgrade.php');
 		
 		#Check to see if the table exists already, if not, then create it
 
@@ -22,19 +27,37 @@ class GHOIB_plugin_activation{
 			$sql = "CREATE TABLE ". $wp_track_table . " ( ";
 			$sql .= "  `slot_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, ";
 			$sql .= "  `bed_id` varchar(100) NOT NULL COMMENT 'system assigned bed id', ";
-			$sql .= "  `room_no` varchar(100) NOT NULL COMMENT 'room number from the guest house post', ";
+			$sql .= "  `room_no` varchar(100) NOT NULL COMMENT 'mapping number from mapping table', ";
 			$sql .= "  `room_type` varchar(100) NOT NULL, ";
 			$sql .= "  `booked_status` varchar(100) NOT NULL DEFAULT '0' COMMENT 'Booked status(will contain 0 if free or booking id if occupied)', ";
 			$sql .= "  `guest_house_id` varchar(100) NOT NULL COMMENT 'Post id of guest house', ";
 			$sql .= "  `is_engaged` tinyint(1) NOT NULL DEFAULT '0' ";
 			$sql .= ")$charset_collate; ";
-			require_once(ABSPATH . '/wp-admin/upgrade-functions.php');
-			require_once(ABSPATH . '/wp-admin/includes/upgrade.php');
 			
 			dbDelta($sql);
 		}
 		
+		if($wpdb->get_var( "show tables like '$wp_room_map_table'" ) != $wp_room_map_table) 
+		{
+
+			$sql_room_map = "CREATE TABLE ". $wp_room_map_table . " ( ";
+			$sql_room_map .= "  `map_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, ";
+			$sql_room_map .= "  `room_id` varchar(100) NOT NULL COMMENT 'system assigned room id', ";
+			$sql_room_map .= "  `room_name` varchar(100) NOT NULL COMMENT 'room number from the guest house post', ";
+			$sql_room_map .= "  `room_type` varchar(100) NOT NULL, ";
+			$sql_room_map .= "  `guest_house_id` varchar(100) NOT NULL COMMENT 'Post id of guest house', ";
+			$sql_room_map .= ")$charset_collate; ";
+			
+			dbDelta($sql_room_map);
+		}
+		$this->routine_initialize_booking_slots();
 		//file_put_contents(ABSPATH. 'wp-content/plugins/activation_output_buffer.html', ob_get_contents());
+	}
+	
+	/*Initialize Booking slot table if there are already some guest house present*/
+	function routine_initialize_booking_slots()
+	{
+		
 	}
 }
 ?>
