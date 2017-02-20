@@ -7,10 +7,10 @@ class GHOIB_booking_slot_table{
 	private $ghob_wpdb,$booking_table,$room_map_table; 
 	
 	public function __construct(){
-		
-		$this->$ghob_wpdb = global $wpdb;
-		$this->$booking_table = $this->$ghob_wpdb->prefix . "booking_slots";
-		$this->$room_map_table = $this->$ghob_wpdb->prefix . "room_mapping";
+		global $wpdb;
+		$this->ghob_wpdb = &$wpdb;
+		$this->booking_table = $this->ghob_wpdb->prefix . "booking_slots";
+		$this->room_map_table = $this->ghob_wpdb->prefix . "room_mapping";
 	}
 	
 	public function create_new_booking_slots_first_time($post_id){
@@ -29,29 +29,37 @@ class GHOIB_booking_slot_table{
 				//create a unique bed_id
 				$temp_bed_id = $post_id.'-single-'.$s_i;
 				
-				$this->$ghob_wpdb->insert( $this->$booking_table, array(
+				$this->ghob_wpdb->insert( $this->booking_table, array(
 					'bed_id' => base64_encode($temp_bed_id), 
 					'room_no' => $this->get_room_mapid($post_id,'single',$bedroom_numbers_array[$s_i]),
 					'room_type' => 'single',
-					'guest_house_id	' => $post_id
+					'guest_house_id' => $post_id
 					),array(
 					'%s','%s','%s','%s')
 				);
+				
 			}
 		}
 		
 		if(!empty($double_bedroom_numbers)){
 			$double_bedroom_numbers_array = explode(',',$double_bedroom_numbers);
-			for($d_i=0;	$d_i < $double_bed_room*2; $d_i++){
+			$intrm_dup_db_ar = array();
+			foreach($double_bedroom_numbers_array as $bd_rm){
+				array_push($intrm_dup_db_ar,$bd_rm);
+				array_push($intrm_dup_db_ar,$bd_rm);
+			}
+			
+			for($d_i=0;	$d_i < ($double_bed_room*2); $d_i++){
 				
 				//create a unique bed_id
 				$temp_bed_id = $post_id.'-double-'.$d_i;
+				$d_room_name = $intrm_dup_db_ar[$d_i];
 				
-				$this->$ghob_wpdb->insert( $this->$booking_table, array(
+				$this->ghob_wpdb->insert( $this->booking_table, array(
 					'bed_id' => base64_encode($temp_bed_id), 
-					'room_no' => $this->get_room_mapid($post_id,'double',$double_bedroom_numbers_array[$d_i]),
+					'room_no' => $this->get_room_mapid($post_id,'double',$d_room_name),
 					'room_type' => 'double',
-					'guest_house_id	' => $post_id
+					'guest_house_id' => $post_id
 					),array(
 					'%s','%s','%s','%s')
 				);
@@ -60,16 +68,22 @@ class GHOIB_booking_slot_table{
 		
 		if(!empty($triple_bedroom_numbers)){
 			$triple_bedroom_numbers_array = explode(',',$triple_bedroom_numbers);
-			for($t_i=0;	$t_i < $triple_bed_room*3; $t_i++){
+			$intrm_dup_tr_ar = array();
+			foreach($triple_bedroom_numbers_array as $bd_rm){
+				array_push($intrm_dup_tr_ar,$bd_rm);
+				array_push($intrm_dup_tr_ar,$bd_rm);
+				array_push($intrm_dup_tr_ar,$bd_rm);
+			}
+			for($t_i=0;	$t_i < ($triple_bed_room*3); $t_i++){
 				
 				//create a unique bed_id
 				$temp_bed_id = $post_id.'-triple-'.$t_i;
 				
-				$this->$ghob_wpdb->insert( $this->$booking_table, array(
+				$this->ghob_wpdb->insert( $this->booking_table, array(
 					'bed_id' => base64_encode($temp_bed_id), 
-					'room_no' => $this->get_room_mapid($post_id,'triple',$triple_bedroom_numbers_array[$t_i]),
+					'room_no' => $this->get_room_mapid($post_id,'triple',$intrm_dup_tr_ar[$t_i]),
 					'room_type' => 'triple',
-					'guest_house_id	' => $post_id
+					'guest_house_id' => $post_id
 					),array(
 					'%s','%s','%s','%s')
 				);
@@ -89,11 +103,11 @@ class GHOIB_booking_slot_table{
 				
 				$temp_room_id = $post_id.'-triplebedroom-'.$t_m;
 				
-				$this->$ghob_wpdb->insert( $this->$room_map_table, array(
+				$this->ghob_wpdb->insert( $this->room_map_table, array(
 					'room_id' => base64_encode($temp_room_id), 
 					'room_name' => $triple_bedroom_numbers_array[$t_m],
 					'room_type' => 'triple',
-					'guest_house_id	' => $post_id
+					'guest_house_id' => $post_id
 					),array(
 					'%s','%s','%s','%s')
 				);
@@ -106,11 +120,11 @@ class GHOIB_booking_slot_table{
 				
 				$temp_room_id = $post_id.'-doublebedroom-'.$d_m;
 				
-				$this->$ghob_wpdb->insert( $this->$room_map_table, array(
+				$this->ghob_wpdb->insert( $this->room_map_table, array(
 					'room_id' => base64_encode($temp_room_id), 
-					'room_name' => $triple_bedroom_numbers_array[$d_m],
+					'room_name' => $double_bedroom_numbers_array[$d_m],
 					'room_type' => 'double',
-					'guest_house_id	' => $post_id
+					'guest_house_id' => $post_id
 					),array(
 					'%s','%s','%s','%s')
 				);
@@ -123,11 +137,11 @@ class GHOIB_booking_slot_table{
 				
 				$temp_room_id = $post_id.'-singlebedroom-'.$s_m;
 				
-				$this->$ghob_wpdb->insert( $this->$room_map_table, array(
+				$this->ghob_wpdb->insert( $this->room_map_table, array(
 					'room_id' => base64_encode($temp_room_id), 
 					'room_name' => $single_bedroom_numbers_array[$s_m],
 					'room_type' => 'single',
-					'guest_house_id	' => $post_id
+					'guest_house_id' => $post_id
 					),array(
 					'%s','%s','%s','%s')
 				);
@@ -137,7 +151,7 @@ class GHOIB_booking_slot_table{
 	
 	function get_room_mapid($post_id,$roomtype,$roomname){
 		
-		$mapid = $this->$ghob_wpdb->get_var("SELECT map_id FROM $this->$room_map_table WHERE guest_house_id	= '$post_id' AND room_type = '$roomtype' AND room_name = '$roomname'");
+		$mapid = $this->ghob_wpdb->get_var("SELECT map_id FROM $this->room_map_table WHERE guest_house_id	= '$post_id' AND room_type = '$roomtype' AND room_name = '$roomname'");
 		return $mapid;
 	}
 	
@@ -175,7 +189,7 @@ class GHOIB_booking_slot_table{
 						$single_bedroom_numbers_array = array_reverse($single_bedroom_numbers_array);
 						
 						for($d_n=0; $d_n < $deleted_single_room_count; $d_n++){
-							$prev_single_bed_count--;
+							$prev_single_bed_count=$prev_single_bed_count-1;
 							$this->delete_room_number($post_id,'single',$single_bedroom_numbers_array[$d_n],$prev_single_bed_count);
 							
 						}
@@ -261,8 +275,8 @@ class GHOIB_booking_slot_table{
 			$iter_tr = 0;
 			foreach($triple_bedroom_numbers_array as $triple_bedroom){
 				$generate_room_id = base64_encode($post_id.'-triplebedroom-'.$iter_tr);
-				$this->$ghob_wpdb->update( 
-					$this->$room_map_table, 
+				$this->ghob_wpdb->update( 
+					$this->room_map_table, 
 					array( 
 						'room_name' => $triple_bedroom
 					), 
@@ -278,8 +292,8 @@ class GHOIB_booking_slot_table{
 			$iter_db = 0;
 			foreach($double_bedroom_numbers_array as $double_bedroom){
 				$generate_db_room_id = base64_encode($post_id.'-doublebedroom-'.$iter_db);
-				$this->$ghob_wpdb->update( 
-					$this->$room_map_table, 
+				$this->ghob_wpdb->update( 
+					$this->room_map_table, 
 					array( 
 						'room_name' => $double_bedroom
 					), 
@@ -295,8 +309,8 @@ class GHOIB_booking_slot_table{
 			$iter_sn = 0;
 			foreach($single_bedroom_numbers_array as $single_bedroom){
 				$generate_sn_room_id = base64_encode($post_id.'-singlebedroom-'.$iter_sn);
-				$this->$ghob_wpdb->update( 
-					$this->$room_map_table, 
+				$this->ghob_wpdb->update( 
+					$this->room_map_table, 
 					array( 
 						'room_name' => $single_bedroom
 					), 
@@ -313,11 +327,11 @@ class GHOIB_booking_slot_table{
 		
 		$room_id = base64_encode($post_id.'-'.$roomtype.'bedroom-'.$roomindex);
 		
-		$mapid = $this->$ghob_wpdb->get_var("SELECT map_id FROM $this->$room_map_table WHERE guest_house_id	= '$post_id' AND room_type = '$roomtype' AND room_name = '$roomnumber' AND room_id='$room_id'");
+		$mapid = $this->ghob_wpdb->get_var("SELECT map_id FROM $this->room_map_table WHERE guest_house_id = '$post_id' AND room_type = '$roomtype' AND room_name = '$roomnumber' AND room_id='$room_id'");
 		
 		if($mapid>0){
-			$this->$ghob_wpdb->delete( $this->$booking_table, array( 'room_no' => $mapid ) );
-			$this->$ghob_wpdb->delete( $this->$room_map_table, array( 'map_id' => $mapid ) );
+			$this->ghob_wpdb->delete( $this->booking_table, array( 'room_no' => $mapid ) );
+			$this->ghob_wpdb->delete( $this->room_map_table, array( 'map_id' => $mapid ) );
 		}
 	}
 	
@@ -331,11 +345,11 @@ class GHOIB_booking_slot_table{
 			case 'triple': { $temp_room_id = $post_id.'-triplebedroom-'.$roomindex; break;}
 		}
 			
-		$this->$ghob_wpdb->insert( $this->$room_map_table, array(
+		$this->ghob_wpdb->insert( $this->room_map_table, array(
 			'room_id' => base64_encode($temp_room_id), 
 			'room_name' => $roomnumber,
 			'room_type' => $roomtype,
-			'guest_house_id	' => $post_id
+			'guest_house_id' => $post_id
 			),array(
 			'%s','%s','%s','%s')
 		);
@@ -371,11 +385,11 @@ class GHOIB_booking_slot_table{
 			//create a unique bed_id
 			$temp_bed_id = $post_id.'-'.$roomtype.'-'.$g_i;
 			
-			$this->$ghob_wpdb->insert( $this->$booking_table, array(
+			$this->ghob_wpdb->insert( $this->booking_table, array(
 				'bed_id' => base64_encode($temp_bed_id), 
 				'room_no' => $this->get_room_mapid($post_id,$roomtype,$roomnumber),
 				'room_type' => $roomtype,
-				'guest_house_id	' => $post_id
+				'guest_house_id' => $post_id
 				),array(
 				'%s','%s','%s','%s')
 			);
@@ -384,7 +398,7 @@ class GHOIB_booking_slot_table{
 	
 	public function detect_existing_slots($post_id){
 		
-		$rowcount = $this->$ghob_wpdb->get_var("SELECT COUNT(*) FROM $this->$booking_table WHERE guest_house_id	= '$post_id'");
+		$rowcount = $this->ghob_wpdb->get_var("SELECT COUNT(*) FROM $this->booking_table WHERE guest_house_id	= '$post_id'");
 		if($rowcount >0){
 			return false;  //Slots already created for this guest house. Proceed with Caution
 		}
@@ -401,7 +415,7 @@ class GHOIB_booking_slot_table{
 			case 'triple':{ $room_type_val='triple'; break; }
 		}
 		
-		$rowcount = $this->$ghob_wpdb->get_var("SELECT COUNT(*) FROM $this->$booking_table WHERE guest_house_id	= '$post_id' AND room_type='$room_type_val'");
+		$rowcount = $this->ghob_wpdb->get_var("SELECT COUNT(*) FROM $this->booking_table WHERE guest_house_id	= '$post_id' AND room_type='$room_type_val'");
 		if($rowcount >0){
 			return $rowcount;  //Slots already created for this guest house. Proceed with Caution
 		}

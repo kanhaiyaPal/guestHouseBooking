@@ -163,9 +163,10 @@ class GHOB_post_type_guest_house_init {
 			$booking_slots_mapping_obj = new GHOIB_booking_slot_table();
 			$data_already_exist = $booking_slots_mapping_obj->detect_existing_slots($guest_house_details_id);
 			if($data_already_exist){
-				$booking_slots_mapping_obj->create_new_booking_slots_first_time($guest_house_details_id);
 				$booking_slots_mapping_obj->generate_room_map_first_time($guest_house_details_id);
+				$booking_slots_mapping_obj->create_new_booking_slots_first_time($guest_house_details_id);
 			}else{
+
 				$booking_slots_mapping_obj->modify_booking_slots($guest_house_details_id);
 			}
 		}
