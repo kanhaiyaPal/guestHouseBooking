@@ -190,7 +190,7 @@ class GHOIB_booking_slot_table{
 						
 						for($d_n=0; $d_n < $deleted_single_room_count; $d_n++){
 							$prev_single_bed_count=$prev_single_bed_count-1;
-							$this->delete_room_number($post_id,'single',$single_bedroom_numbers_array[$d_n],$prev_single_bed_count);
+							$this->delete_room_number($post_id,'single',$prev_single_bed_count);
 							
 						}
 					}
@@ -221,7 +221,7 @@ class GHOIB_booking_slot_table{
 						
 						for($d_n=0; $d_n < $deleted_double_room_count; $d_n++){
 							$prev_double_bed_room_count--;
-							$this->delete_room_number($post_id,'double',$double_bedroom_numbers_array[$d_n],$prev_double_bed_room_count);
+							$this->delete_room_number($post_id,'double',$prev_double_bed_room_count);
 							
 						}
 					}
@@ -252,7 +252,7 @@ class GHOIB_booking_slot_table{
 						
 						for($d_n=0; $d_n < $deleted_triple_room_count; $d_n++){
 							$prev_triple_bed_room_count--;
-							$this->delete_room_number($post_id,'triple',$triple_bedroom_numbers_array[$d_n],$prev_triple_bed_room_count);
+							$this->delete_room_number($post_id,'triple',$prev_triple_bed_room_count);
 							
 						}
 					}
@@ -323,12 +323,12 @@ class GHOIB_booking_slot_table{
 		
 	}
 	
-	function delete_room_number($post_id,$roomtype,$roomnumber,$roomindex){
+	function delete_room_number($post_id,$roomtype,$roomindex){
 		
 		$room_id = base64_encode($post_id.'-'.$roomtype.'bedroom-'.$roomindex);
 		
-		$mapid = $this->ghob_wpdb->get_var("SELECT map_id FROM $this->room_map_table WHERE guest_house_id = '$post_id' AND room_type = '$roomtype' AND room_name = '$roomnumber' AND room_id='$room_id'");
-		
+		$mapid = $this->ghob_wpdb->get_var("SELECT map_id FROM $this->room_map_table WHERE guest_house_id = '$post_id' AND room_type = '$roomtype' AND room_id='$room_id'");
+
 		if($mapid>0){
 			$this->ghob_wpdb->delete( $this->booking_table, array( 'room_no' => $mapid ) );
 			$this->ghob_wpdb->delete( $this->room_map_table, array( 'map_id' => $mapid ) );

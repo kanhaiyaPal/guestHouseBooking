@@ -50,14 +50,8 @@ class GHOIB_plugin_activation{
 			
 			dbDelta($sql_room_map);
 		}
-		$this->routine_initialize_booking_slots();
-		//file_put_contents(ABSPATH. 'wp-content/plugins/activation_output_buffer.html', ob_get_contents());
-	}
-	
-	/*Initialize Booking slot table if there are already some guest house present*/
-	function routine_initialize_booking_slots()
-	{
 		
+		//file_put_contents(ABSPATH. 'wp-content/plugins/activation_output_buffer.html', ob_get_contents());
 	}
 }
 ?>

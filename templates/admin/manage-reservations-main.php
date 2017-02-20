@@ -29,7 +29,7 @@ $city_list = $this->populate_guest_house_city();
                         	<option value="0" selected="selected">--Select Location--</option>
                         </select>
                     </label>
-                    <label for="resev_guest_house"><span>Guest House</span><span class="required">&nbsp;</span>
+                    <label for="resev_guest_house"><span>Guest House</span><span class="required">*</span>
                     	<select name="resev_guest_house" class="select-field" >
                         	<option value="0" selected="selected">--Select Guest House--</option>
                         </select>
@@ -40,8 +40,8 @@ $city_list = $this->populate_guest_house_city();
                     <label for="check_out_date"><span>Check-Out Date</span><span class="required">*</span>
                     	<input type="text" name="check_out_date" value="" class="ghob-admin-datepicker"  />
                     </label>
-                    <label for="resev_guest_house"><span>Number of Beds</span><span class="required">&nbsp;</span>
-                    	<select name="resev_guest_house" class="select-field" >
+                    <label for="number_of_beds"><span>Number of Beds</span><span class="required">&nbsp;</span>
+                    	<select name="number_of_beds" class="select-field" >
                         	<option value="0" selected="selected">--Select Number of Beds--</option>
                             <option value="1" >1</option>
                             <option value="2" >2</option>
@@ -55,8 +55,9 @@ $city_list = $this->populate_guest_house_city();
                             <option value="10" >10</option>
                         </select>
                     </label>
-                    <label for="resev_guest_house"><span>Number of Rooms</span><span class="required">&nbsp;</span>
-                    	<select name="resev_guest_house" class="select-field" >
+					-OR-
+                    <label for="number_of_rooms"><span>Number of Rooms</span><span class="required">&nbsp;</span>
+                    	<select name="number_of_rooms" class="select-field" >
                         	<option value="0" selected="selected">--Select Number of Rooms--</option>
                             <option value="1" >1</option>
                             <option value="2" >2</option>
@@ -70,7 +71,51 @@ $city_list = $this->populate_guest_house_city();
                             <option value="10" >10</option>
                         </select>
                     </label>
+					<label for="type_of_room"><span>Type of Room</span><span class="required">*</span>
+                    	<select name="type_of_room" class="select-field" >
+                        	<option value="0" selected="selected">--Select Type of Room--</option>
+                            <option value="single" >Single</option>
+                            <option value="double" >Double</option>
+                            <option value="triple" >Triple</option>
+                        </select>
+                    </label>
+					<input type="hidden" name="secure_transaction_key" value="<?php echo wp_create_nonce('ghob_check_availability_'.get_current_user_id()); ?>" />
                     <label><span>&nbsp;</span><input type="button" onclick="check_master_availability()" value="Check Availability" /></label>
+                </fieldset>
+            </div>
+			<div class="form_container form-style-3" >
+            	<fieldset><legend>Fill Booking Details</legend>
+                	<label for="guest_name"><span>Guest Name</span><span class="required">*</span>
+						<input type="text" name="guest_name" value="" required/>
+                    </label>
+					<label for="guest_email"><span>Guest Email</span><span class="required">*</span>
+						<input type="email" name="guest_email" value="" required/>
+                    </label>
+					<label for="guest_phone"><span>Guest Phone</span><span class="required">*</span>
+						<input type="tel" name="guest_phone" value="" pattern="\d{10}" required/>
+                    </label>
+					<label for="guest_phone"><span>Guest Company</span><span class="required">&nbsp;</span>
+						<input type="text" name="guest_company" value="" />
+                    </label>
+					<label for="guest_address"><span>Guest Address</span><span class="required">&nbsp;</span>
+						<textarea name="guest_address" class="textarea-field"></textarea></label>
+                    </label>
+                    <label for="guest_amount_paid"><span>Amount Paid</span><span class="required">*</span>
+						<input type="tel" name="guest_amount_paid" value="" pattern="\d" required/>
+                    </label>
+                    <label for="guest_amount_paid"><span>Receipt/ Reference Number</span><span class="required">&nbsp;</span>
+						<input type="tel" name="guest_amount_refernce" value=""  />
+                    </label>
+					<label for="guest_amount_paid"><span>Payment Method</span><span class="required">*</span>
+						<select name="guest_payment_method" class="select-field" required>
+                        	<option value="0" selected="selected">--Select Payment Method--</option>
+                            <option value="1" >Cash</option>
+                            <option value="2" >Cheque</option>
+                            <option value="3" >Credit Card/Debit Card</option>
+                            
+                        </select>
+                    </label>
+                    <label><span>&nbsp;</span><input type="button" onclick="book_room()" value="Book Room" /></label>
                 </fieldset>
             </div>
         </div>

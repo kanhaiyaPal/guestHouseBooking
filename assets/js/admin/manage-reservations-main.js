@@ -1,5 +1,15 @@
 var GHOB_inst = jQuery.noConflict();
 
+var city = GHOB_inst('select[name="resev_city"]').val();
+var location = GHOB_inst('select[name="resev_location"]').val();
+var guest_house = GHOB_inst('select[name="resev_guest_house"]').val();
+var checkin = GHOB_inst('input[name="check_in_date"]').val();
+var checkout = GHOB_inst('input[name="check_out_date"]').val();
+var number_of_rooms = GHOB_inst('select[name="number_of_rooms"]').val();
+var number_of_beds = GHOB_inst('select[name="number_of_beds"]').val();
+var type_of_room = GHOB_inst('select[name="type_of_room"]').val();
+var wp_secret_key_reservation = GHOB_inst('input[name="secure_transaction_key"]').val();
+
 function isDate(txtDate)
 {
   var currVal = txtDate;
@@ -34,15 +44,12 @@ function isDate(txtDate)
 }
 
 function validate_availability_form(){
-	var city = GHOB_inst('select[name="resev_city"]').val();
-	var location = GHOB_inst('select[name="resev_location"]').val();
-	var checkin = GHOB_inst('input[name="check_in_date"]').val();
-	var checkout = GHOB_inst('input[name="check_out_date"]').val();
 	
 	var error_string = '';
 	
 	if(city == '0'){error_string +='\nSelect city first';}
 	if(location == '0'){error_string +='\nSelect location first';}
+	if(guest_house == '0'){error_string +='\nSelect Guest House first';}
 	if(!isDate(checkin)){error_string +='\nCheck-In date is not valid';}
 	if(!isDate(checkout)){error_string +='\nCheck-Out date is not valid';}
 	
@@ -58,6 +65,9 @@ function validate_availability_form(){
 		error_string +='\nCheckout should be made later than Checkin date';
 	}
 	
+	if((number_of_rooms == '0')&&(number_of_beds == '0')){ error_string +='\nSelect either number of rooms or numbers of beds to book';}
+	if(type_of_room == '0'){error_string +='\nSelect Type of Room first';}
+	
 	if(error_string.length>0){
 		alert(error_string);
 		return false;
@@ -68,7 +78,26 @@ function validate_availability_form(){
 
 function check_master_availability(){
 	//validate the form first
-	validate_availability_form();
+	var validate_flag = validate_availability_form();
+	if(validate_flag){
+		
+		var data = {
+			'action': 'ghob_view_availability',
+			'city': parseInt(city),
+			'location': parseInt(location),
+			'guest_house':parseInt(guest_house),
+			'checkin': checkin,
+			'checkout': checkout,
+			'no_rooms': number_of_rooms,
+			'no_beds': number_of_beds,
+			'type_of_room': type_of_room,
+			'secret': wp_secret_key_reservation
+		};
+		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+		GHOB_inst.post(ajaxurl, data, function(response) {
+			alert(response);
+		});
+	}
 }
 
 function ghob_search_location(selected_city_id){

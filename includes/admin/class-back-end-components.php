@@ -15,6 +15,7 @@ class GHOB_admin_components_setup {
 		/*Ajax handler for reservation fields*/
 		add_action( 'wp_ajax_locate_city_location', array($this, 'ghob_locate_city_loaction') );
 		add_action( 'wp_ajax_locate_guest_house', array($this, 'ghob_locate_guest_houses') );
+		add_action( 'wp_ajax_ghob_view_availability', array($this, 'ghob_view_availability') );
 	}
 	
 	function register_admin_menus()
@@ -80,6 +81,25 @@ class GHOB_admin_components_setup {
 			echo '<option value="'.$term->term_id.'">'. $term->name . '</option>';
 		}
 
+		wp_die(); // this is required to terminate immediately and return a proper response
+	}
+	
+	function ghob_view_availability() {
+		if ( !current_user_can( 'manage_options' ) )  {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
+		if(wp_verify_nonce( $_REQUEST['secret'], 'ghob_check_availability_'.get_current_user_id())){
+			
+			require_once GHOB_PLUGIN_DIR. '/includes/admin/class-live-booking-admin.php';
+			
+			$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
+			$GHOB_live_booking_obj->GHOB_check_rooms_availability($_POST){
+				
+			}
+		
+		}else{
+			wp_die();
+		}
 		wp_die(); // this is required to terminate immediately and return a proper response
 	}
 	

@@ -8,6 +8,7 @@ class GHOB_init {
     {
 		/*add custom post types*/
 		require_once GHOB_PLUGIN_DIR. '/includes/class-post-type-guest-house.php'; 
+		require_once GHOB_PLUGIN_DIR. '/includes/class-post-type-booking.php'; 
 		
 		/*set up admin side components*/
 		require_once GHOB_PLUGIN_DIR. '/includes/admin/class-back-end-components.php';
