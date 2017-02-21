@@ -1,17 +1,6 @@
 var GHOB_inst = jQuery.noConflict();
 
-var city = GHOB_inst('select[name="resev_city"]').val();
-var location = GHOB_inst('select[name="resev_location"]').val();
-var guest_house = GHOB_inst('select[name="resev_guest_house"]').val();
-var checkin = GHOB_inst('input[name="check_in_date"]').val();
-var checkout = GHOB_inst('input[name="check_out_date"]').val();
-var number_of_rooms = GHOB_inst('select[name="number_of_rooms"]').val();
-var number_of_beds = GHOB_inst('select[name="number_of_beds"]').val();
-var type_of_room = GHOB_inst('select[name="type_of_room"]').val();
-var wp_secret_key_reservation = GHOB_inst('input[name="secure_transaction_key"]').val();
-
-function isDate(txtDate)
-{
+function isDate(txtDate){
   var currVal = txtDate;
   if(currVal == '')
     return false;
@@ -43,12 +32,38 @@ function isDate(txtDate)
   return true;
 }
 
+function validate_booking_form_filling(){
+	
+	var guest_name = GHOB_inst('input[name="guest_name"]').val()
+	var guest_email = GHOB_inst('input[name="guest_email"]').val();
+	var guest_phone = GHOB_inst('input[name="guest_phone"]').val();
+	var guest_company = GHOB_inst('input[name="guest_company"]').val();
+	var guest_address = GHOB_inst('input[name="guest_address"]').val();
+	var guest_amount_paid= GHOB_inst('input[name="guest_amount_paid"]').val();
+	var guest_amount_ref = GHOB_inst('input[name="guest_amount_refernce"]').val();
+	var guest_payment_method = GHOB_inst('select[name="guest_payment_method"]').val();
+	
+	if(guest_name == ''){
+		
+	}
+}
+
 function validate_availability_form(){
+	
+	var city = GHOB_inst('select[name="resev_city"]').val();
+	var g_location = GHOB_inst('select[name="resev_location"]').val();
+	var guest_house = GHOB_inst('select[name="resev_guest_house"]').val();
+	var checkin = GHOB_inst('input[name="check_in_date"]').val();
+	var checkout = GHOB_inst('input[name="check_out_date"]').val();
+	var number_of_rooms = GHOB_inst('select[name="number_of_rooms"]').val();
+	var number_of_beds = GHOB_inst('select[name="number_of_beds"]').val();
+	var type_of_room = GHOB_inst('select[name="type_of_room"]').val();
+	var wp_secret_key_reservation = GHOB_inst('input[name="secure_transaction_key"]').val();
 	
 	var error_string = '';
 	
 	if(city == '0'){error_string +='\nSelect city first';}
-	if(location == '0'){error_string +='\nSelect location first';}
+	if(g_location == '0'){error_string +='\nSelect location first';}
 	if(guest_house == '0'){error_string +='\nSelect Guest House first';}
 	if(!isDate(checkin)){error_string +='\nCheck-In date is not valid';}
 	if(!isDate(checkout)){error_string +='\nCheck-Out date is not valid';}
@@ -79,12 +94,23 @@ function validate_availability_form(){
 function check_master_availability(){
 	//validate the form first
 	var validate_flag = validate_availability_form();
+	
+	var city = GHOB_inst('select[name="resev_city"]').val();
+	var g_location = GHOB_inst('select[name="resev_location"]').val();
+	var guest_house = GHOB_inst('select[name="resev_guest_house"]').val();
+	var checkin = GHOB_inst('input[name="check_in_date"]').val();
+	var checkout = GHOB_inst('input[name="check_out_date"]').val();
+	var number_of_rooms = GHOB_inst('select[name="number_of_rooms"]').val();
+	var number_of_beds = GHOB_inst('select[name="number_of_beds"]').val();
+	var type_of_room = GHOB_inst('select[name="type_of_room"]').val();
+	var wp_secret_key_reservation = GHOB_inst('input[name="secure_transaction_key"]').val();
+	
 	if(validate_flag){
 		
 		var data = {
 			'action': 'ghob_view_availability',
 			'city': parseInt(city),
-			'location': parseInt(location),
+			'location': parseInt(g_location),
 			'guest_house':parseInt(guest_house),
 			'checkin': checkin,
 			'checkout': checkout,
@@ -95,7 +121,15 @@ function check_master_availability(){
 		};
 		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
 		GHOB_inst.post(ajaxurl, data, function(response) {
-			alert(response);
+			console.log(response);
+			if(response == 'not_available'){  
+				GHOB_inst('#display_booking_form').hide();
+				GHOB_inst('#display_not_available_message').show("slow");
+			}else{
+				GHOB_inst('input#display_amount_admin').val(response+' per bed/room');
+				GHOB_inst('#display_booking_form').show( "slow" );
+				GHOB_inst('#display_not_available_message').hide();
+			}
 		});
 	}
 }
@@ -118,6 +152,24 @@ function ghob_search_location(selected_city_id){
 
 }
 
+function ghob_book_room(){
+	
+	var availability_validator = validate_availability_form();
+	
+	var guest_name = GHOB_inst('input[name="guest_name"]').val()
+	var guest_email = GHOB_inst('input[name="guest_email"]').val();
+	var guest_phone = GHOB_inst('input[name="guest_phone"]').val();
+	var guest_company = GHOB_inst('input[name="guest_company"]').val();
+	var guest_address = GHOB_inst('input[name="guest_address"]').val();
+	var guest_amount_paid= GHOB_inst('input[name="guest_amount_paid"]').val();
+	var guest_amount_ref = GHOB_inst('input[name="guest_amount_refernce"]').val();
+	var guest_payment_method = GHOB_inst('select[name="guest_payment_method"]').val();
+	
+	if(availability_validator){
+		var var_booking = validate_booking_form_filling();
+	}
+}
+
 function ghob_search_guest_house(location_id){
 	if(parseInt(location_id)==0){
 		GHOB_inst('select[name="resev_guest_house"]').html('<option value="0" selected="selected">--Select Guest House--</option>');
@@ -134,7 +186,10 @@ function ghob_search_guest_house(location_id){
 }
 
 GHOB_inst( document ).ready(function() {
-
+									 
+	GHOB_inst('#display_booking_form').hide();
+	GHOB_inst('#display_not_available_message').hide();
+	
     GHOB_inst("ul#ghob_tabs li").click(function(e){
         if (!GHOB_inst(this).hasClass("active")) {
             var tabNum = GHOB_inst(this).index();

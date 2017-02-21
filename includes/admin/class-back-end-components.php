@@ -16,6 +16,8 @@ class GHOB_admin_components_setup {
 		add_action( 'wp_ajax_locate_city_location', array($this, 'ghob_locate_city_loaction') );
 		add_action( 'wp_ajax_locate_guest_house', array($this, 'ghob_locate_guest_houses') );
 		add_action( 'wp_ajax_ghob_view_availability', array($this, 'ghob_view_availability') );
+		
+		
 	}
 	
 	function register_admin_menus()
@@ -88,17 +90,25 @@ class GHOB_admin_components_setup {
 		if ( !current_user_can( 'manage_options' ) )  {
 			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 		}
-		if(wp_verify_nonce( $_REQUEST['secret'], 'ghob_check_availability_'.get_current_user_id())){
-			
-			require_once GHOB_PLUGIN_DIR. '/includes/admin/class-live-booking-admin.php';
-			
-			$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
-			$GHOB_live_booking_obj->GHOB_check_rooms_availability($_POST){
-				
-			}
 		
+		if(wp_verify_nonce($_REQUEST['secret'], 'ghob_check_availability_'.get_current_user_id())){
+			
+			/*include booking live operations class file*/
+			require_once GHOB_PLUGIN_DIR. '/includes/admin/class-live-booking-admin.php';
+			$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
+			
+			$slots_array = $GHOB_live_booking_obj->GHOB_check_rooms_availability($_REQUEST);
+			$check_pricing_of_room = $GHOB_live_booking_obj->GHOB_check_rooms_pricing($_REQUEST);
+			
+			if(count($slots_array)>0){
+				global $wp_session;
+ 				$wp_session['available_slots'] = $slots_array;
+				echo $check_pricing_of_room;
+			}else{
+				echo 'not_available';
+			}
 		}else{
-			wp_die();
+			wp_die('Transaction Authentication failed');
 		}
 		wp_die(); // this is required to terminate immediately and return a proper response
 	}
@@ -125,7 +135,7 @@ class GHOB_admin_components_setup {
 			while($query->have_posts()){
 				$query->the_post();
 				echo "<option value='". get_the_ID()."'>";
-				if(strlen(get_the_title())>0){get_the_title();}else{echo 'No Title Defined';}
+				if(strlen(get_the_title())>0){echo get_the_title();}else{echo 'No Title Defined';}
 				echo "</option>";
 			}
 		}

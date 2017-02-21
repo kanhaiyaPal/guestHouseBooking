@@ -83,7 +83,15 @@ $city_list = $this->populate_guest_house_city();
                     <label><span>&nbsp;</span><input type="button" onclick="check_master_availability()" value="Check Availability" /></label>
                 </fieldset>
             </div>
-			<div class="form_container form-style-3" >
+			
+			<div class="form_container form-style-3" id="display_not_available_message" >
+            	<fieldset><legend>No Rooms/Beds Found !!</legend>
+                	<label for="guest_name"><span>Sorry No Rooms/Beds available for search criteria ! kindly change the search criteria to book room</span>
+					</label>
+				</fieldset>
+			</div>
+        </div>
+		<div class="form_container form-style-3" id="display_booking_form" >
             	<fieldset><legend>Fill Booking Details</legend>
                 	<label for="guest_name"><span>Guest Name</span><span class="required">*</span>
 						<input type="text" name="guest_name" value="" required/>
@@ -100,13 +108,16 @@ $city_list = $this->populate_guest_house_city();
 					<label for="guest_address"><span>Guest Address</span><span class="required">&nbsp;</span>
 						<textarea name="guest_address" class="textarea-field"></textarea></label>
                     </label>
+					<label for="guest_amount_payable"><span>Amount Payable </span><span class="required">&nbsp;</span>
+						<input type="text" id="display_amount_admin" value="" disabled />
+                    </label>
                     <label for="guest_amount_paid"><span>Amount Paid</span><span class="required">*</span>
 						<input type="tel" name="guest_amount_paid" value="" pattern="\d" required/>
                     </label>
-                    <label for="guest_amount_paid"><span>Receipt/ Reference Number</span><span class="required">&nbsp;</span>
+                    <label for="guest_amount_refernce"><span>Receipt/ Reference No.</span><span class="required">&nbsp;</span>
 						<input type="tel" name="guest_amount_refernce" value=""  />
                     </label>
-					<label for="guest_amount_paid"><span>Payment Method</span><span class="required">*</span>
+					<label for="guest_payment_method"><span>Payment Method</span><span class="required">*</span>
 						<select name="guest_payment_method" class="select-field" required>
                         	<option value="0" selected="selected">--Select Payment Method--</option>
                             <option value="1" >Cash</option>
@@ -118,7 +129,6 @@ $city_list = $this->populate_guest_house_city();
                     <label><span>&nbsp;</span><input type="button" onclick="book_room()" value="Book Room" /></label>
                 </fieldset>
             </div>
-        </div>
     </li>
     
     <li>

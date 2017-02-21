@@ -45,7 +45,7 @@ class GHOIB_plugin_activation{
 			$sql_room_map .= "  `room_id` varchar(100) NOT NULL COMMENT 'system assigned room id', ";
 			$sql_room_map .= "  `room_name` varchar(100) NOT NULL COMMENT 'room number from the guest house post', ";
 			$sql_room_map .= "  `room_type` varchar(100) NOT NULL, ";
-			$sql_room_map .= "  `guest_house_id` varchar(100) NOT NULL COMMENT 'Post id of guest house', ";
+			$sql_room_map .= "  `guest_house_id` varchar(100) NOT NULL COMMENT 'Post id of guest house' ";
 			$sql_room_map .= ")$charset_collate; ";
 			
 			dbDelta($sql_room_map);

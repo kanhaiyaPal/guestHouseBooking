@@ -116,6 +116,7 @@ ul#ghob_tab li.active {
 .form-style-3 input[type=time],
 .form-style-3 input[type=url],
 .form-style-3 input[type=email],
+.form-style-3 input[type=tel],
 .form-style-3 select, 
 .form-style-3 textarea{
     border-radius: 3px;
@@ -239,4 +240,9 @@ ul#ghob_tab li.active {
 }
 .ui-icon-circle-triangle-e {
     background-position: -48px -192px;
+}
+
+.form_container{
+ float:left;
+ margin-right:10px;
 }
