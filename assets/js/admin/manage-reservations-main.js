@@ -32,6 +32,16 @@ function isDate(txtDate){
   return true;
 }
 
+function isEmail(email) {
+  var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+  return regex.test(email);
+}
+
+function isValidPhone(phone_no){
+	var regex_ph = /^\d{10}$/;
+	return regex_ph.test(phone_no);
+} 
+
 function validate_booking_form_filling(){
 	
 	var guest_name = GHOB_inst('input[name="guest_name"]').val()
@@ -43,9 +53,20 @@ function validate_booking_form_filling(){
 	var guest_amount_ref = GHOB_inst('input[name="guest_amount_refernce"]').val();
 	var guest_payment_method = GHOB_inst('select[name="guest_payment_method"]').val();
 	
-	if(guest_name == ''){
-		
+	var error_string = '';
+	
+	if(guest_name == ''){error_string +='\nGuest Name field cannot be blank';}
+	if(guest_email == ''){error_string +='\nGuest Email field cannot be blank';}else{ if(!isEmail(guest_email)){ error_string +='\nGuest Email is not valid'; } }
+	if(guest_phone == ''){error_string +='\nGuest Phone field cannot be blank';}else{ if(!isValidPhone(guest_phone)){ error_string +='\nGuest Phone is not valid'; } }
+	if(guest_amount_paid == ''){error_string +='\nAmount Paid field cannot be blank';}else{ if(isNaN(guest_amount_paid)){ error_string +='\nPaid amount value is not valid'; } }
+	if(guest_payment_method == '0'){error_string +='\nPlease select appropriate payment method';}
+	
+	if(error_string.length > 0){
+		alert(error_string);
+		return false;
 	}
+	
+	return true;
 }
 
 function validate_availability_form(){
@@ -160,13 +181,54 @@ function ghob_book_room(){
 	var guest_email = GHOB_inst('input[name="guest_email"]').val();
 	var guest_phone = GHOB_inst('input[name="guest_phone"]').val();
 	var guest_company = GHOB_inst('input[name="guest_company"]').val();
-	var guest_address = GHOB_inst('input[name="guest_address"]').val();
+	var guest_address = GHOB_inst('#guest_address').val();
 	var guest_amount_paid= GHOB_inst('input[name="guest_amount_paid"]').val();
 	var guest_amount_ref = GHOB_inst('input[name="guest_amount_refernce"]').val();
 	var guest_payment_method = GHOB_inst('select[name="guest_payment_method"]').val();
+	var guest_security_key = GHOB_inst('input[name="secure_booking_key"]').val();
+	var checkin = GHOB_inst('input[name="check_in_date"]').val();
+	var checkout = GHOB_inst('input[name="check_out_date"]').val();
+	var type_of_room = GHOB_inst('select[name="type_of_room"]').val();
+	var number_of_rooms = GHOB_inst('select[name="number_of_rooms"]').val();
+	var number_of_beds = GHOB_inst('select[name="number_of_beds"]').val();
+	
+	var room_bed_qty = 0;
+	var entity = '';
+	if(number_of_rooms > 0){  room_bed_qty = number_of_rooms; entity='room'; }else{ room_bed_qty = number_of_beds; entity='bed'; }
 	
 	if(availability_validator){
 		var var_booking = validate_booking_form_filling();
+		if(var_booking){
+			var data = {
+				'action': 'ghob_book_slots',
+				'rv_guest_name': guest_name,
+				'rv_guest_email':guest_email,
+				'rv_guest_phone': guest_phone,
+				'rv_guest_company': guest_company,
+				'rv_guest_address': guest_address,
+				'rv_paid_amount': guest_amount_paid,
+				'rv_ref_no': guest_amount_ref,
+				'rv_payment_method': guest_payment_method,
+				'rv_guest_checkin': checkin,
+				'rv_guest_checkout': checkout,
+				'rv_guest_room_type': type_of_room,
+				'rv_guest_room_bed_qty': room_bed_qty,
+				'rv_guest_entity_to_book': entity,
+				'rv_security_key': guest_security_key
+			};
+			// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+			GHOB_inst.post(ajaxurl, data, function(response) {
+				console.log(response);
+				if(response == 'booking_successfull'){  
+					GHOB_inst('#display_booking_form').hide();
+					GHOB_inst('#display_not_available_message').show("slow");
+				}else{
+					GHOB_inst('input#display_amount_admin').val(response+' per bed/room');
+					GHOB_inst('#display_booking_form').show( "slow" );
+					GHOB_inst('#display_not_available_message').hide();
+				}
+			});
+		}
 	}
 }
 
@@ -186,7 +248,7 @@ function ghob_search_guest_house(location_id){
 }
 
 GHOB_inst( document ).ready(function() {
-									 
+	
 	GHOB_inst('#display_booking_form').hide();
 	GHOB_inst('#display_not_available_message').hide();
 	

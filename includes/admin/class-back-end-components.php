@@ -12,12 +12,23 @@ class GHOB_admin_components_setup {
 		/*enqueue page specific script*/
 		add_action( 'admin_enqueue_scripts', array($this, 'admin_manage_reservation_main_js') );
 		
+		/*include booking live operations class file*/
+		require_once GHOB_PLUGIN_DIR. '/includes/admin/class-live-booking-admin.php';
+		
+		/*register session hadler*/
+		add_action('init', array($this, 'register_session') );
+		
 		/*Ajax handler for reservation fields*/
 		add_action( 'wp_ajax_locate_city_location', array($this, 'ghob_locate_city_loaction') );
 		add_action( 'wp_ajax_locate_guest_house', array($this, 'ghob_locate_guest_houses') );
 		add_action( 'wp_ajax_ghob_view_availability', array($this, 'ghob_view_availability') );
+		add_action( 'wp_ajax_ghob_book_slots', array($this, 'ghob_book_slots') );
 		
-		
+	}
+	
+	function register_session(){
+		if( !session_id() )
+		session_start();
 	}
 	
 	function register_admin_menus()
@@ -86,23 +97,39 @@ class GHOB_admin_components_setup {
 		wp_die(); // this is required to terminate immediately and return a proper response
 	}
 	
-	function ghob_view_availability() {
-		if ( !current_user_can( 'manage_options' ) )  {
-			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+	function ghob_book_slots(){
+		if(wp_verify_nonce($_REQUEST['rv_security_key'], 'ghob_book_slots_'.get_current_user_id())){
+			
+ 			if(isset($_SESSION['available_slots'])){
+				
+				$GHOB_live_book_obj = new GHOIB_live_booking_operations();
+				//create new booking post_type
+				//update the post id to booking table
+				$book_id_post = $GHOB_live_book_obj->create_booking_guest($_POST,$_SESSION['available_slots']);
+				if($book_id_post){  
+					unset($_SESSION['available_slots']);
+					echo 'booking_success';
+				}
+			}else{
+				wp_die('No booking slots found! Please re-search again');
+			}
+			
+		}else{
+			wp_die('Transaction Authentication failed');
 		}
-		
+		wp_die(); // this is required to terminate immediately and return a proper response
+	}
+	
+	function ghob_view_availability() {
+			
 		if(wp_verify_nonce($_REQUEST['secret'], 'ghob_check_availability_'.get_current_user_id())){
 			
-			/*include booking live operations class file*/
-			require_once GHOB_PLUGIN_DIR. '/includes/admin/class-live-booking-admin.php';
 			$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
-			
 			$slots_array = $GHOB_live_booking_obj->GHOB_check_rooms_availability($_REQUEST);
 			$check_pricing_of_room = $GHOB_live_booking_obj->GHOB_check_rooms_pricing($_REQUEST);
 			
 			if(count($slots_array)>0){
-				global $wp_session;
- 				$wp_session['available_slots'] = $slots_array;
+				$_SESSION['available_slots'] = $slots_array;
 				echo $check_pricing_of_room;
 			}else{
 				echo 'not_available';

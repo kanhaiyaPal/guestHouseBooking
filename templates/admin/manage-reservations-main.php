@@ -106,7 +106,7 @@ $city_list = $this->populate_guest_house_city();
 						<input type="text" name="guest_company" value="" />
                     </label>
 					<label for="guest_address"><span>Guest Address</span><span class="required">&nbsp;</span>
-						<textarea name="guest_address" class="textarea-field"></textarea></label>
+						<textarea id="guest_address" class="textarea-field"></textarea></label>
                     </label>
 					<label for="guest_amount_payable"><span>Amount Payable </span><span class="required">&nbsp;</span>
 						<input type="text" id="display_amount_admin" value="" disabled />
@@ -120,13 +120,14 @@ $city_list = $this->populate_guest_house_city();
 					<label for="guest_payment_method"><span>Payment Method</span><span class="required">*</span>
 						<select name="guest_payment_method" class="select-field" required>
                         	<option value="0" selected="selected">--Select Payment Method--</option>
-                            <option value="1" >Cash</option>
-                            <option value="2" >Cheque</option>
-                            <option value="3" >Credit Card/Debit Card</option>
+                            <option value="Cash" >Cash</option>
+                            <option value="Cheque" >Cheque</option>
+                            <option value="Credit/Debit Card" >Credit Card/Debit Card</option>
                             
                         </select>
                     </label>
-                    <label><span>&nbsp;</span><input type="button" onclick="book_room()" value="Book Room" /></label>
+					<input type="hidden" name="secure_booking_key" value="<?php echo wp_create_nonce('ghob_book_slots_'.get_current_user_id()); ?>" />
+                    <label><span>&nbsp;</span><input type="button" onclick="ghob_book_room()" value="Book Room" /></label>
                 </fieldset>
             </div>
     </li>

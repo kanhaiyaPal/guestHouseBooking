@@ -18,6 +18,11 @@ $userphone = get_post_meta( $booking_details->ID, 'guestphone', true );
 $usercompany = get_post_meta( $booking_details->ID, 'guestcompany', true );
 $useraddress = get_post_meta( $booking_details->ID, 'guestaddress', true );
 
+if(strpos($a, ',') !== false) {
+	$room_id_array = explode(',',$room_id);
+}else{
+	$room_id_array = array($room_id);
+}
 ?>
 <table style="width:100%">
 	<tr>
@@ -30,14 +35,14 @@ $useraddress = get_post_meta( $booking_details->ID, 'guestaddress', true );
 	</tr>
 	<tr>
 		<td><strong>Room Number</strong></td>
-		<td><?php echo $this->get_room_name($room_id); ?></td>
+		<td><?php foreach($room_id_array as $s_room_id){ echo $this->get_room_name($s_room_id); } ?></td>
 	</tr>
 	<tr>
-		<td><strong>Bed Type</strong></td>
+		<td><strong>Bed/Room Type</strong></td>
 		<td><?=$bedtype?></td>
 	</tr>
 	<tr>
-		<td><h4>Payment Details</h4></td>
+		<td><h3>Payment Details</h3></td>
 		<td><hr/></td>
 	</tr>
 	<tr>
@@ -53,7 +58,7 @@ $useraddress = get_post_meta( $booking_details->ID, 'guestaddress', true );
 		<td><?=$amount?></td>
 	</tr>
 	<tr>
-		<td><h4>Stay Details</h4></td>
+		<td><h3>Stay Details</h3></td>
 		<td><hr/></td>
 	</tr>
 	<tr>
@@ -65,7 +70,7 @@ $useraddress = get_post_meta( $booking_details->ID, 'guestaddress', true );
 		<td><?=$checkout?></td>
 	</tr>
 	<tr>
-		<td><h4>User Details</h4></td>
+		<td><h3>User Details</h3></td>
 		<td><hr/></td>
 	</tr>
 	<tr>

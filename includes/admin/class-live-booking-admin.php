@@ -7,10 +7,16 @@ class GHOIB_live_booking_operations{
 	private $ghob_wpdb,$booking_table,$room_map_table; 
 	
 	public function __construct(){
+		
+		/*include bookings posts class file*/
+		require_once GHOB_PLUGIN_DIR. '/includes/class-post-type-booking.php';
+		
 		global $wpdb;
 		$this->ghob_wpdb = &$wpdb;
 		$this->booking_table = $this->ghob_wpdb->prefix . "booking_slots";
 		$this->room_map_table = $this->ghob_wpdb->prefix . "room_mapping";
+		
+		
 	}
 	
 	public function GHOB_check_rooms_availability($search_query_array){
@@ -58,10 +64,11 @@ class GHOIB_live_booking_operations{
 				
 				if($q_nobeds > 0){  
 					if((count($result_count)) >= $q_nobeds){
-						$available_beds_result = $this->push_array_with_result($result_count,$q_checkin,$q_checkout);
+						$ret_val = $this->push_array_with_result($result_count,$q_checkin,$q_checkout);
+						$available_beds_result = $ret_val['slots'];
 					}
 				}else{
-					/*Bed room check*/
+					/*Bed or room check*/
 					$comparater = 0;
 					switch($q_type){
 						case 'single':{ $comparater = count($result_count); break; }
@@ -69,7 +76,8 @@ class GHOIB_live_booking_operations{
 						case 'triple':{ $comparater = count($result_count)/3; break; }
 					}
 					if( $comparater >= $q_norooms){
-						$available_beds_result = $this->push_array_with_result($result_count,$q_checkin,$q_checkout);
+						$ret_val = $this->push_array_with_result($result_count,$q_checkin,$q_checkout);
+						$available_beds_result = $this->filter_out_bad_slots($ret_val['slots'],$ret_val['scrap_room_ids']);
 					}
 				}
 				
@@ -84,27 +92,51 @@ class GHOIB_live_booking_operations{
 		}
 	}
 	
+	function filter_out_bad_slots($slot_ids,$room_ids){
+		
+		$ret_array = array();
+		$comb_slot_ids = implode(',',$slot_ids);
+		$comb_room_ids = implode(',',$room_ids);
+		$s_sql = 'SELECT * FROM $this->booking_table WHERE slot_id IN ($comb_slot_ids) AND room_no NOT IN ($comb_room_ids)';
+		$valid_slots = $this->ghob_wpdb->get_results($this->ghob_wpdb->prepare($s_sql)); 
+		foreach($valid_slots as $slot){
+			array_push($ret_array,$slot->slot_id);
+		}
+		return $ret_array;
+	}
+	
 	function push_array_with_result($sql_result_array,$q_checkin,$q_checkout){
 		$available_beds_result = array();
+		$scrapped_map_ids = array();
+		
 		foreach($sql_result_array as $result){
 			if($result->booked_status == 0){
 				array_push($available_beds_result,$result->slot_id);
 			}else{
 				$booking_ids = explode(',',$result->booked_status);
+				$av_flag = false;
 				foreach($booking_ids as $bookingid){
-					$check_in_book = strtotime(get_post_meta( $bookingid, 'checkindate', true ));
-					$check_out_book = strtotime(get_post_meta( $bookingid, 'checkoutdate', true ));
-					
-					$req_checkin = strtotime($q_checkin);
-					$req_checkout = strtotime($q_checkout);
-					
-					if(!($req_checkin <= $check_out_book)&&($req_checkout >= $check_in_book)){
-						array_push($available_beds_result,$result->slot_id);
+					if ( !(FALSE === get_post_status( $bookingid )) ) {
+						$check_in_book = strtotime(str_replace("/","-",get_post_meta( $bookingid, 'checkindate', true )));
+						$check_out_book = strtotime(str_replace("/","-",get_post_meta( $bookingid, 'checkoutdate', true )));
+						
+						$req_checkin = strtotime(str_replace("/","-",$q_checkin));
+						$req_checkout = strtotime(str_replace("/","-",$q_checkout));
+						
+						if(!(($req_checkin <= $check_out_book)&&($req_checkout >= $check_in_book))){
+							$av_flag = true;
+						}else{
+							$av_flag = false;
+						}
 					}
 				}
+				if($av_flag)
+				array_push($available_beds_result,$result->slot_id);
+				else
+				array_push($scrapped_map_ids,$result->room_no);
 			}
 		}
-		return $available_beds_result;
+		return array('slots'=>$available_beds_result,'scrap_room_ids'=>$scrapped_map_ids);
 	}
 	
 	public function GHOB_check_rooms_pricing($data_array){
@@ -143,6 +175,13 @@ class GHOIB_live_booking_operations{
 			}
 		}
 		
+	}
+	
+	public function create_booking_guest($form_data,$avail_array)
+	{
+		$ghob_new_book_post_obj = new GHOB_post_type_booking_init();
+		$booking_id = $ghob_new_book_post_obj->create_new_booking($form_data,$avail_array);
+		return $booking_id;
 	}
 }
 ?>
