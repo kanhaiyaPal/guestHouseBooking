@@ -18,7 +18,7 @@ $userphone = get_post_meta( $booking_details->ID, 'guestphone', true );
 $usercompany = get_post_meta( $booking_details->ID, 'guestcompany', true );
 $useraddress = get_post_meta( $booking_details->ID, 'guestaddress', true );
 
-if(strpos($a, ',') !== false) {
+if(strpos($room_id, ',') !== false) {
 	$room_id_array = explode(',',$room_id);
 }else{
 	$room_id_array = array($room_id);
@@ -35,7 +35,7 @@ if(strpos($a, ',') !== false) {
 	</tr>
 	<tr>
 		<td><strong>Room Number</strong></td>
-		<td><?php foreach($room_id_array as $s_room_id){ echo $this->get_room_name($s_room_id); } ?></td>
+		<td><?php foreach($room_id_array as $s_room_id){ echo $this->get_room_name($s_room_id).'|'; } ?></td>
 	</tr>
 	<tr>
 		<td><strong>Bed/Room Type</strong></td>

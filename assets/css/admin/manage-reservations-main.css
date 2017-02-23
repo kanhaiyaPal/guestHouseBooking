@@ -246,3 +246,34 @@ ul#ghob_tab li.active {
  float:left;
  margin-right:10px;
 }
+
+/*Mapping Page Css*/
+table.map_table{
+	border: 1px solid;
+    float: left;
+    min-width: 29%;
+    margin: 10px;
+    padding: 7px;
+}
+table.map_table td{
+	border: 1px solid #000;
+    text-align: center;
+	background-color: #7fff00;
+}
+table.map_table td.engaged_caution{
+	background-color: #faebd7 !important;
+	color:#fff;
+}
+table.map_table td.engaged{
+	background-color: #ff7f50 !important;
+	color:#fff;
+}
+table.map_table td.vacant{
+	background-color: #7fff00 !important;
+}
+table.map_table td.table_header_map{
+	background-color: #00ffff !important;
+}
+table.map_table td.bed_c{
+	background-color: #fff8dc !important;
+}

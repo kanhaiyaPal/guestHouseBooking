@@ -76,6 +76,7 @@ function validate_availability_form(){
 	var guest_house = GHOB_inst('select[name="resev_guest_house"]').val();
 	var checkin = GHOB_inst('input[name="check_in_date"]').val();
 	var checkout = GHOB_inst('input[name="check_out_date"]').val();
+	var entity_select = GHOB_inst('select[name="selector_of_field"]').val();
 	var number_of_rooms = GHOB_inst('select[name="number_of_rooms"]').val();
 	var number_of_beds = GHOB_inst('select[name="number_of_beds"]').val();
 	var type_of_room = GHOB_inst('select[name="type_of_room"]').val();
@@ -100,6 +101,8 @@ function validate_availability_form(){
 	if(sel_checkout<sel_checkin){
 		error_string +='\nCheckout should be made later than Checkin date';
 	}
+	
+	if(entity_select == '0'){ error_string +='\nSelect type of booking you want to do, either rooms or beds'; }
 	
 	if((number_of_rooms == '0')&&(number_of_beds == '0')){ error_string +='\nSelect either number of rooms or numbers of beds to book';}
 	if(type_of_room == '0'){error_string +='\nSelect Type of Room first';}
@@ -219,9 +222,11 @@ function ghob_book_room(){
 			// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
 			GHOB_inst.post(ajaxurl, data, function(response) {
 				console.log(response);
-				if(response == 'booking_successfull'){  
+				if(response == 'booking_success'){  
+					/*clear form fields and reset fields of availability*/
+					ghob_clear_form_availability_booking();
 					GHOB_inst('#display_booking_form').hide();
-					GHOB_inst('#display_not_available_message').show("slow");
+					GHOB_inst('#display_room_booked').show("slow");
 				}else{
 					GHOB_inst('input#display_amount_admin').val(response+' per bed/room');
 					GHOB_inst('#display_booking_form').show( "slow" );
@@ -230,6 +235,44 @@ function ghob_book_room(){
 			});
 		}
 	}
+}
+
+function ghob_field_selector(selct_option){
+	if(selct_option == '1'){ GHOB_inst('#field_number_of_beds').show();  GHOB_inst('#field_number_of_rooms').hide(); }
+	if(selct_option == '2'){ GHOB_inst('#field_number_of_rooms').show(); GHOB_inst('#field_number_of_beds').hide(); }
+}
+
+function ghob_clear_form_availability_booking(){
+	//reset all fields
+	
+	GHOB_inst('select[name="resev_city"]').val('0');
+	GHOB_inst('select[name="resev_location"]').html('<option value="0" selected="selected">--Select Location--</option>');
+	GHOB_inst('select[name="resev_location"]').val('0');
+	GHOB_inst('select[name="resev_guest_house"]').val('0');
+	GHOB_inst('input[name="check_in_date"]').val('');
+	GHOB_inst('input[name="check_out_date"]').val('');
+	GHOB_inst('select[name="selector_of_field"]').val('0')
+	GHOB_inst('#field_number_of_beds').hide();
+	GHOB_inst('#field_number_of_rooms').hide();
+	GHOB_inst('select[name="number_of_rooms"]').val('0');
+	GHOB_inst('select[name="number_of_beds"]').val('0');
+	GHOB_inst('select[name="type_of_room"]').val('0');
+	GHOB_inst('input[name="secure_transaction_key"]').val('');
+	GHOB_inst('input[name="guest_name"]').val('');
+	GHOB_inst('input[name="guest_email"]').val('');
+	GHOB_inst('input[name="guest_phone"]').val('');
+	GHOB_inst('input[name="guest_company"]').val('');
+	GHOB_inst('#guest_address').val('');
+	GHOB_inst('input[name="guest_amount_paid"]').val('');
+	GHOB_inst('input[name="guest_amount_refernce"]').val('');
+	GHOB_inst('select[name="guest_payment_method"]').val('0');
+	GHOB_inst('input[name="secure_booking_key"]').val('');
+	GHOB_inst('input[name="check_in_date"]').val('');
+	GHOB_inst('input[name="check_out_date"]').val('');
+	GHOB_inst('select[name="type_of_room"]').val('0');
+	GHOB_inst('select[name="number_of_rooms"]').val('0');
+	GHOB_inst('select[name="number_of_beds"]').val('0');
+	
 }
 
 function ghob_search_guest_house(location_id){
@@ -247,10 +290,33 @@ function ghob_search_guest_house(location_id){
 	});
 }
 
+
+/***Functions to perform view occupany map***/
+function show_guest_house_map(){
+	
+	var selected_guest_house = GHOB_inst('select[name="selected_guest_house_view"]').val();
+	if(selected_guest_house != 0){
+		var data = {
+			'action': 'get_guest_house_map',
+			'guest_house_id': parseInt(selected_guest_house)
+		};
+		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+		GHOB_inst.post(ajaxurl, data, function(response) {
+			GHOB_inst('div.display_mapping_wrapper').html(response);
+		});
+	}else{
+		alert('Select a Guest House to continue');
+	}
+}
+
 GHOB_inst( document ).ready(function() {
 	
 	GHOB_inst('#display_booking_form').hide();
 	GHOB_inst('#display_not_available_message').hide();
+	GHOB_inst('#display_room_booked').hide();
+	GHOB_inst('#display_room_booked_error').hide();
+	GHOB_inst('#field_number_of_beds').hide();
+	GHOB_inst('#field_number_of_rooms').hide();
 	
     GHOB_inst("ul#ghob_tabs li").click(function(e){
         if (!GHOB_inst(this).hasClass("active")) {

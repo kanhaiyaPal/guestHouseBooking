@@ -95,13 +95,18 @@ class GHOIB_live_booking_operations{
 	function filter_out_bad_slots($slot_ids,$room_ids){
 		
 		$ret_array = array();
-		$comb_slot_ids = implode(',',$slot_ids);
-		$comb_room_ids = implode(',',$room_ids);
-		$s_sql = 'SELECT * FROM $this->booking_table WHERE slot_id IN ($comb_slot_ids) AND room_no NOT IN ($comb_room_ids)';
+		$comb_slot_ids = implode(',',array_unique($slot_ids, SORT_REGULAR));
+		if(!empty($room_ids))
+		$comb_room_ids = implode(',',array_unique($room_ids, SORT_REGULAR));
+		else
+		$comb_room_ids =0;
+	
+		$s_sql = "SELECT * FROM $this->booking_table WHERE slot_id IN ($comb_slot_ids) AND room_no NOT IN ($comb_room_ids)";
 		$valid_slots = $this->ghob_wpdb->get_results($this->ghob_wpdb->prepare($s_sql)); 
 		foreach($valid_slots as $slot){
 			array_push($ret_array,$slot->slot_id);
 		}
+
 		return $ret_array;
 	}
 	
@@ -127,6 +132,7 @@ class GHOIB_live_booking_operations{
 							$av_flag = true;
 						}else{
 							$av_flag = false;
+							break;
 						}
 					}
 				}
@@ -150,7 +156,7 @@ class GHOIB_live_booking_operations{
 			switch($q_type){
 				case 'single':{ 
 					if($q_norooms > 0){
-						return get_post_meta( $q_guest_house, 'singleroomprice', true );
+						return get_post_meta( $q_guest_house, 'singlebedprice', true );
 					}else{
 						return get_post_meta( $q_guest_house, 'singlebedprice', true );
 					}

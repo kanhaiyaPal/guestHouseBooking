@@ -24,6 +24,8 @@ class GHOB_admin_components_setup {
 		add_action( 'wp_ajax_ghob_view_availability', array($this, 'ghob_view_availability') );
 		add_action( 'wp_ajax_ghob_book_slots', array($this, 'ghob_book_slots') );
 		
+		/*Ajax handler for view occupancy mapping*/
+		add_action( 'wp_ajax_get_guest_house_map', array($this, 'ghob_occupancy_details_guest_house') );
 	}
 	
 	function register_session(){
@@ -56,6 +58,30 @@ class GHOB_admin_components_setup {
 			wp_enqueue_script('field-date-js','Field_Date.js',array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker'),time(),true);	
 			wp_enqueue_style( 'jquery-ui-datepicker' );
 		}
+	}
+	
+	function populate_guest_house_having_slots()
+	{
+		$output_guesthouse_html = '';
+		
+		$args = array(
+			'post_type'=> 'guest_house',
+			'order'    => 'ASC',
+			'post_status' => 'publish'
+		);              
+
+		$post_query = new WP_Query( $args );
+		
+		if($post_query->have_posts() ) {
+			while ( $post_query->have_posts() ) {
+				$post_query->the_post();
+				$p_g_id =  get_the_ID();
+				$p_g_title = get_the_title();
+				$output_guesthouse_html .= "<option value='$p_g_id'>$p_g_title</option>";
+			} 
+		} 
+		
+		return $output_guesthouse_html;
 	}
 	
 	function populate_guest_house_city()
@@ -167,6 +193,100 @@ class GHOB_admin_components_setup {
 			}
 		}
 		wp_die();
+	}
+	
+	function ghob_occupancy_details_guest_house()
+	{
+		global $wpdb;
+		$mapping_table = $wpdb->prefix. 'room_mapping';
+		$booking_table = $wpdb->prefix. 'booking_slots';
+		
+		$room_mapping_output = '';
+		
+		if ( !current_user_can( 'manage_options' ) )  {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
+		
+		$guesthouseID = $_POST['guest_house_id'];
+		if($guesthouseID > 0){
+			//get all rooms
+			$ghob_get_rooms = $wpdb->get_results($wpdb->prepare("SELECT * FROM $mapping_table WHERE guest_house_id ='$guesthouseID';"));
+			if(count($ghob_get_rooms) > 0){
+				foreach( $ghob_get_rooms as $room) {
+					$room_mapping_output .= '<table class="map_table"><tr><td class="table_header_map" colspan="2"><h3>'.$room->room_name.' - '.$room->room_type.' Bed Room </h3></td></tr>';
+					
+					$ghob_get_slots = $wpdb->get_results($wpdb->prepare("SELECT * FROM $booking_table WHERE room_no ='$room->map_id';"));
+					if(count($ghob_get_slots)>0){
+						$bed_counter = 1;
+						foreach($ghob_get_slots as $slot){
+							$room_mapping_output .= '<tr>';
+							$room_mapping_output .= '<td class="bed_c">Bed - '.$bed_counter.'</td>';
+							if($slot->booked_status != 0 ){
+								if(strpos($slot->booked_status, ',') !== false){
+									$booking_id_ar = explode(',',$slot->booked_status);
+									$room_mapping_output .= '<td class="engaged_caution" height="160">'; 
+									$booking_id_count = 0;
+									foreach($booking_id_ar as $booking_id){
+										if($this->is_displayable_to_map($booking_id))
+										{
+											$guest_info_a = $this->get_customer_details_booking_id($booking_id);
+											
+											$room_mapping_output .= 'Guest name:'.$guest_info_a['guest_name'].'<br/><hr/>';
+											$room_mapping_output .= 'Guest Mobile:'.$guest_info_a['guest_mobile'].'<br/><hr/>';
+											$room_mapping_output .= 'Check In Date:'.$guest_info_a['checkin'].'<br/><hr/>';
+											$room_mapping_output .= 'Check Out Date:'.$guest_info_a['checkout'].'<br/><hr/>';
+											$room_mapping_output .= '<hr/><hr/>';
+										}
+										else{ $booking_id_count++; continue; } 
+									}
+									if(count($booking_id_ar) == $booking_id_count){
+										$room_mapping_output .= ' Vacant ';
+									}
+									$room_mapping_output .= '</td>';
+								}else{
+									if($this->is_displayable_to_map($slot->booked_status))
+									{
+										$guest_info = $this->get_customer_details_booking_id($slot->booked_status);
+										$room_mapping_output .= '<td class="engaged" height="160">'; 
+										$room_mapping_output .= 'Guest name:'.$guest_info['guest_name'].'<br/><hr/>';
+										$room_mapping_output .= 'Guest Mobile:'.$guest_info['guest_mobile'].'<br/><hr/>';
+										$room_mapping_output .= 'Check In Date:'.$guest_info['checkin'].'<br/><hr/>';
+										$room_mapping_output .= 'Check Out Date:'.$guest_info['checkout'].'<br/><hr/>';
+										$room_mapping_output .= '</td>';
+									}
+									else{ $room_mapping_output .= '<td class="vacant"> Vacant </td>'; }
+								}
+							}else{
+								$room_mapping_output .= '<td height="160"> Vacant </td>';
+							}
+							$room_mapping_output .= '</tr>';
+							$bed_counter++;
+						}
+					}
+					$room_mapping_output .= '</table>';
+				}
+			}else{
+				wp_die('System failed to draw the room map, please generate room by visiting guest house page');
+			}
+			echo $room_mapping_output;
+		}
+		
+		wp_die();
+	}
+	
+	function is_displayable_to_map($booking_id){
+		// Convert to timestamp
+		$start_ts = strtotime(str_replace('/','-',get_post_meta($booking_id,'checkindate',true)));
+		$end_ts = strtotime(str_replace('/','-',get_post_meta($booking_id,'checkoutdate',true)));
+		$user_ts = date('d-m-Y');
+
+		// Check that user date is between start & end
+		return (!($user_ts >= $start_ts) && ($user_ts <= $end_ts));
+	}
+	
+	function get_customer_details_booking_id($booking_id){
+		
+		return array('guest_name' => get_post_meta($booking_id,'guestname',true),'guest_mobile' => get_post_meta($booking_id,'guestphone',true),'checkin'=> get_post_meta($booking_id,'checkindate',true),'checkout'=> get_post_meta($booking_id,'checkoutdate',true));
 	}
 }
 
