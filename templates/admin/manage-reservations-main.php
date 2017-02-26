@@ -6,6 +6,7 @@ if ( !defined( 'ABSPATH' ) ) {
 <ul id="ghob_tabs">
     <li class="active">Live Booking of Room</li>
     <li>View Occupancy Status</li>
+	<li>Admin Special Operations</li>
 </ul>
 <ul id="ghob_tab">
     <!--Live Booking of Rooms-->
@@ -20,6 +21,13 @@ if ( !defined( 'ABSPATH' ) ) {
         <?php 
 			/*include view occupany template*/
 			require_once GHOB_PLUGIN_DIR. '/templates/admin/page-view-occupany.php'; 
+		?>
+    </li>
+	
+	<li>
+        <?php 
+			/*include view occupany template*/
+			require_once GHOB_PLUGIN_DIR. '/templates/admin/page-admin-special-operations.php'; 
 		?>
     </li>
 </ul>
