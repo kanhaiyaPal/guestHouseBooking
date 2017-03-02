@@ -34,20 +34,43 @@ class GHOIB_live_booking_operations{
 		$q_type = $search_query_array['type_of_room'];
 		$q_guest_house = $search_query_array['guest_house'];
 		
+		$city_location_array = array();
+		if(isset($search_query_array['city'])){
+			if(($q_city != '') && ($q_city != '0')){
+				array_push($city_location_array,$q_city);
+			}
+		}
+		if(isset($search_query_array['location'])){
+			if(($q_location != '') && ($q_location != '0')){
+				array_push($city_location_array,$q_location);
+			}
+		}
+		
 		//get all posts having city and location 
-		$args = array(
-			'post_type'  => 'guest_house',
-			'tax_query' => array(				
-				array(
-					'taxonomy' => 'GHOB_City_Location',
-					'field'    => 'term_id',
-					'terms'    => array($q_city,$q_location)
-					)
-				),
-			'numberposts' => -1,
-			'post_status'   => 'publish',
-			'post__in' => array( $q_guest_house )
-		);
+		$args = array();
+		
+		if(!empty($city_location_array)){
+			$args = array(
+				'post_type'  => 'guest_house',
+				'tax_query' => array(				
+					array(
+						'taxonomy' => 'GHOB_City_Location',
+						'field'    => 'term_id',
+						'terms'    => $city_location_array
+						)
+					),
+				'numberposts' => -1,
+				'post_status'   => 'publish',
+				'post__in' => array( $q_guest_house )
+			);
+		}else{
+			$args = array(
+				'post_type'  => 'guest_house',
+				'numberposts' => -1,
+				'post_status'   => 'publish',
+				'post__in' => array( $q_guest_house )
+			);
+		}
 		
 		$city_location_results = new WP_Query( $args );
 		
@@ -188,6 +211,145 @@ class GHOIB_live_booking_operations{
 		$ghob_new_book_post_obj = new GHOB_post_type_booking_init();
 		$booking_id = $ghob_new_book_post_obj->create_new_booking($form_data,$avail_array);
 		return $booking_id;
+	}
+	
+	public function available_room_for_shifting($guest_house_id,$g_checkin,$g_checkout,$room_no_to_shift){
+		//find available slots
+		$available_slot_no = array();
+		$unavailable_slot_no = array();
+		$given_room_slots_no = array();
+		
+		$sf_sql = "SELECT * FROM $this->booking_table WHERE guest_house_id='$guest_house_id'";
+		$all_slots = $this->ghob_wpdb->get_results($this->ghob_wpdb->prepare($sf_sql)); 
+		if(count($all_slots) >0){
+			foreach($all_slots as $slot){
+				if($slot->booked_status != 0){
+					if(strpos($slot->booked_status,',')!= false){
+						$slot_array = explode(',',$slot->booked_status);
+						foreach($slot_array as $bookingid){
+							if($this->check_clashes_of_dates($bookingid,$g_checkin,$g_checkout)){
+								array_push($available_slot_no,$slot->slot_id);
+							}else{
+								array_push($unavailable_slot_no,$slot->slot_id);
+							}
+						}
+					}else{
+						if($this->check_clashes_of_dates($slot->booked_status,$g_checkin,$g_checkout)){
+							array_push($available_slot_no,$slot->slot_id);
+						}else{
+							array_push($unavailable_slot_no,$slot->slot_id);
+						}
+					}
+				}else{
+					array_push($available_slot_no,$slot->slot_id);
+				}	
+			}
+		}
+		$avialble_slots = array_diff(array_unique($available_slot_no),array_unique($unavailable_slot_no));
+		
+		//get given room no slots
+		$srm_sql = "SELECT * FROM $this->booking_table WHERE room_no='$room_no_to_shift'";
+		$all_rm_slots = $this->ghob_wpdb->get_results($this->ghob_wpdb->prepare($srm_sql)); 
+		foreach($all_rm_slots as $rm_slot){
+			array_push($given_room_slots_no,$rm_slot->slot_id);
+		}
+		
+		$evaluater = false;
+		foreach($given_room_slots_no as $given_slot){
+			if(in_array($given_slot,$avialble_slots)){
+				$evaluater = $given_slot;
+				break;
+			}else{
+				$evaluater = false;
+			}
+		}
+		
+		if($evaluater){
+			return $evaluater;
+		}else{
+			return false;
+		}
+		
+	}
+	
+	function check_clashes_of_dates($bookingid,$g_checkin,$g_checkout){
+		$check_in_book = strtotime(str_replace("/","-",get_post_meta( $bookingid, 'checkindate', true )));
+		$check_out_book = strtotime(str_replace("/","-",get_post_meta( $bookingid, 'checkoutdate', true )));
+		
+		$req_checkin = strtotime(str_replace("/","-",$g_checkin));
+		$req_checkout = strtotime(str_replace("/","-",$g_checkout));
+		
+		if(!(($req_checkin <= $check_out_book)&&($req_checkout >= $check_in_book))){
+			return true;
+		}else{
+			//clash found
+			return false;
+		}
+	}
+	
+	public function move_guest_to_new_room($slot_new_id,$guest_booking_id,$slot_old_id){
+		$booked_status_ar = array();
+		$new_booked_status_ar = array();
+		
+		$up_sql = "SELECT * FROM $this->booking_table WHERE slot_id='$slot_old_id'";
+		$qr_result = $this->ghob_wpdb->get_row($this->ghob_wpdb->prepare($up_sql)); 
+		
+		if($qr_result->booked_status != '0'){
+			if(strpos($qr_result->booked_status,',')!= false){
+				$booked_status_ar = explode(',',$qr_result->booked_status);
+			}else{
+				array_push($booked_status_ar,$qr_result->booked_status);
+			}
+		}
+		
+		$diff_arr = array_diff($booked_status_ar, array($guest_booking_id));
+		$reindexed_bookingid_array = array_values($diff_arr);
+		
+		if(count($reindexed_bookingid_array)>1){
+			$updt_booked_status = implode(',',$reindexed_bookingid_array);
+		}else{
+			$updt_booked_status = $reindexed_bookingid_array[0];
+		}
+		if(empty($updt_booked_status)){
+			$updt_booked_status = 0;
+		}
+		$this->ghob_wpdb->update( 
+			$this->booking_table, 
+			array(
+				'booked_status' => $updt_booked_status
+			),
+			array( 'slot_id' => $slot_old_id )
+		);
+		
+		$nw_sql = "SELECT * FROM $this->booking_table WHERE slot_id='$slot_new_id'";
+		$nr_result = $this->ghob_wpdb->get_row($this->ghob_wpdb->prepare($nw_sql)); 
+		
+		if($nr_result->booked_status != '0'){
+			if(strpos($nr_result->booked_status,',')!= false){
+				$new_booked_status_ar = explode(',',$nr_result->booked_status);
+			}else{
+				array_push($new_booked_status_ar,$nr_result->booked_status);
+			}
+		}
+			
+		array_push($new_booked_status_ar,$guest_booking_id);
+
+		
+		if(count($new_booked_status_ar)>1){
+			$updt_new_booked_status = implode(',',$new_booked_status_ar);
+		}else{
+			$updt_new_booked_status = $new_booked_status_ar[0];
+		}
+		
+		$this->ghob_wpdb->update( 
+			$this->booking_table, 
+			array(
+				'booked_status' => $updt_new_booked_status
+			),
+			array( 'slot_id' => $slot_new_id )
+		);
+		
+		return true;
 	}
 }
 ?>

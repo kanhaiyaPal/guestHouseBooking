@@ -3,7 +3,7 @@ if ( !defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-class GHOB_post_type_booking_init {	
+class GHOB_post_type_coupon_init {	
 	public function __construct()
     {
 		/*initialize custom post type hook*/
@@ -90,4 +90,6 @@ class GHOB_post_type_booking_init {
 		}
 	}
 }
+
+$wpGHOB_coupon_instance = new GHOB_post_type_coupon_init();
 ?>

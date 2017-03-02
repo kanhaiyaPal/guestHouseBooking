@@ -11,7 +11,7 @@ $guest_house_list_sp = $this->populate_guest_house_having_slots();
 	</tr>
 	<tr>
 		<td>Guest House:
-			<select name="selected_guest_house_sp_mov" >
+			<select name="selected_guest_house_sp_mov" onchange="sp_get_rooms_list(this.value)">
 			<option value="0">--Select Guest house--</option>
 			<?php echo $guest_house_list_sp; ?>
 			</select> 
@@ -19,15 +19,13 @@ $guest_house_list_sp = $this->populate_guest_house_having_slots();
 				<tr><td>Move From </td></tr>
 				<tr>
 					<td>Select Room:
-					<select name="selected_guest_house_sp" >
-					<option value="0">--Select Guest house--</option>
-					<?php echo $guest_house_list_sp; ?>
+					<select name="select_room_sp" onchange="sp_get_guests_list(this.value)">
+					<option value="0">--Select Room--</option>
 					</select>
 					</td>
-					<td>Select Guest:
-					<select name="selected_guest_house_sp" >
-					<option value="0">--Select Guest house--</option>
-					<?php echo $guest_house_list_sp; ?>
+					<td>Select Guest Name:
+					<select name="select_room_guest_sp" >
+					<option value="0">--Select Guest--</option>
 					</select>
 					
 					</td>
@@ -35,43 +33,18 @@ $guest_house_list_sp = $this->populate_guest_house_having_slots();
 				<tr><td>Move To </td></tr>
 				<tr>
 					<td>Select Room:
-					<select name="selected_guest_house_sp" >
-					<option value="0">--Select Guest house--</option>
-					<?php echo $guest_house_list_sp; ?>
+					<select name="select_room_shifted_sp" >
+					<option value="0">--Select Room--</option>
 					</select>
 					</td>
-					<td>Select Bed:
-					<select name="selected_guest_house_sp" >
-					<option value="0">--Select Guest house--</option>
-					<?php echo $guest_house_list_sp; ?>
-					</select>
-					
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<td>
+					<input type="button" value="Move Guest" onclick="shift_current_guest_to_room()" /> 
 					</td>
 				</tr>
 			</table>
-		</td>
-	</tr>
-	<tr>
-		<td><h4>Early Checkout</h4></td>
-	</tr>
-	<tr>
-		<td>Guest House:
-			<select name="selected_guest_house_sp_mov" >
-			<option value="0">--Select Guest house--</option>
-			<?php echo $guest_house_list_sp; ?>
-			</select> 
-			Select Room:
-			<select name="selected_guest_house_sp_mov" >
-			<option value="0">--Select Guest house--</option>
-			<?php echo $guest_house_list_sp; ?>
-			</select> 
-			Select Guest:
-			<select name="selected_guest_house_sp_mov" >
-			<option value="0">--Select Guest house--</option>
-			<?php echo $guest_house_list_sp; ?>
-			</select>
-			Choose Date:
-			<input type="date" name="early_checkout_date" />
 		</td>
 	</tr>
 </table>

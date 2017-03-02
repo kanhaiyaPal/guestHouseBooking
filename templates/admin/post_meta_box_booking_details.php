@@ -35,7 +35,7 @@ if(strpos($room_id, ',') !== false) {
 	</tr>
 	<tr>
 		<td><strong>Room Number</strong></td>
-		<td><?php foreach($room_id_array as $s_room_id){ echo $this->get_room_name($s_room_id).'|'; } ?></td>
+		<td><?php echo $this->get_room_no_html($room_id_array); ?></td>
 	</tr>
 	<tr>
 		<td><strong>Bed/Room Type</strong></td>
@@ -67,7 +67,11 @@ if(strpos($room_id, ',') !== false) {
 	</tr>
 	<tr>
 		<td><strong>Check-out Date</strong></td>
-		<td><?=$checkout?></td>
+		<td><?=$checkout?>
+		<span><button class="change_checkout_bt" onclick="show_date_field()">Change Checkout</button>
+		<input type="text" class="ghob-admin-datepicker" name="early_checkout_date"/>
+		</span>
+		</td>
 	</tr>
 	<tr>
 		<td><h3>User Details</h3></td>
@@ -94,3 +98,8 @@ if(strpos($room_id, ',') !== false) {
 		<td><?=$useraddress?></td>
 	</tr>
 </table> 
+<script>
+GHOB_inst( document ).ready(function() {
+	var ghob_datepicker_instance = GHOB_inst('.ghob-admin-datepicker').datepicker({dateFormat: 'dd/mm/yy',numberOfMonths: 1,minDate: '<?php echo $checkin; ?>'});
+});
+</script>

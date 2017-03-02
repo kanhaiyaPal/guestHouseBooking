@@ -15,6 +15,12 @@ class GHOB_post_type_booking_init {
 		
 		/*Custom Meta Box for showing booking details*/
 		add_action( 'admin_init', array( $this, 'create_meta_box_guest_house') ); 
+		
+		/*enqueue page specific script*/
+		add_action( 'admin_enqueue_scripts', array($this, 'admin_booking_page_js') );
+		
+		/*Save custom checkout data*/
+		add_action( 'save_post', array( $this, 'add_custom_checkout_date'), 10, 2 ); 
 
 	}
 	
@@ -72,6 +78,25 @@ class GHOB_post_type_booking_init {
 		require_once GHOB_PLUGIN_DIR . '/templates/admin/post_meta_box_booking_details.php';
 	}
 	
+	
+	function get_room_no_html($room_array){
+		$output_html_room = '';
+		if(count($room_array)==1){
+			return $this->get_room_name($room_array[0]);
+		}else{
+			$room_count = 0;
+			foreach($room_array as $single_room){
+				$output_html_room .= $this->get_room_name($single_room);
+				if($room_count == (count($room_array)-1)){
+					
+				}else{
+					$output_html_room .= '|';
+				}
+				$room_count++;
+			}
+		}
+		return $output_html_room;
+	}
 	function get_guest_house_title($post_id)
 	{
 		return get_the_title($post_id);
@@ -87,6 +112,7 @@ class GHOB_post_type_booking_init {
 	
 	function create_new_booking($post_data,$available_slot_array)
 	{
+
 		// Create post object
 		$booking_post = array(
 		  'post_title'    => 'Booking Order #'.md5(uniqid(rand(), true)),
@@ -153,6 +179,7 @@ class GHOB_post_type_booking_init {
 	}
 	
 	function book_current_slot($item_qty,$slot_id_array,$new_booking_id){
+		
 		$room_id_ar = array();
 		$guest_h_id = '';
 		
@@ -166,7 +193,10 @@ class GHOB_post_type_booking_init {
 			
 			$q_r = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $booking_table WHERE slot_id = '$curr_slot_id'" ) );
 			if($q_r->booked_status != '0'){
+				if(strpos($q_r->booked_status,',') != false)
 				$booked_status_ar = explode(',',$q_r->booked_status);
+				else
+				array_push($booked_status_ar,$q_r->booked_status);
 			}			
 			
 			array_push($booked_status_ar,$new_booking_id);
@@ -190,6 +220,40 @@ class GHOB_post_type_booking_init {
 		}
 		
 		return array('guest_house' => $guest_h_id, 'room_id_ar' => implode(',',$room_id_ar));
+	}
+	
+	function admin_booking_page_js($hook){
+		$cpt = 'booking';
+
+		if( in_array($hook, array('post.php', 'post-new.php') ) ){
+			$screen = get_current_screen();
+
+			if( is_object( $screen ) && $cpt == $screen->post_type ){
+				
+				//hide Add New button on top
+				echo '<style>a.page-title-action{display:none;}</style>';
+				
+				// Register, enqueue scripts and styles here
+				wp_enqueue_script( 'custom-post-guest-house-js',plugins_url( '../assets/js/admin/custom-post-booking.js', __FILE__) );
+				
+				/**for datepicker**/
+				wp_enqueue_script('field-date-js','Field_Date.js',array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker'),time(),true);	
+				wp_register_style('jquery-ui-datepicker', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css');
+				wp_enqueue_style( 'jquery-ui-datepicker' );
+			}
+		}
+	}
+	
+	function add_custom_checkout_date($booking_id, $booking_details){
+		if($booking_details->post_type == 'booking'){
+			if ( !current_user_can( 'manage_options' ) )  {
+				wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+			}
+			
+			if ( isset( $_POST['early_checkout_date'] ) && $_POST['early_checkout_date'] != '' ) {
+				update_post_meta( $booking_id, 'checkoutdate', $_POST['early_checkout_date'] );
+			}
+		}
 	}
 }
 $wpGHOB_custom_booking_post = new GHOB_post_type_booking_init();

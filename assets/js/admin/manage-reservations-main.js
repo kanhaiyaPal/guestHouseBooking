@@ -1,5 +1,114 @@
 var GHOB_inst = jQuery.noConflict();
 
+function sp_get_rooms_list(gid_val){
+	if(parseInt(gid_val)==0){
+		GHOB_inst('select[name="select_room_sp"]').html('<option value="0" selected="selected">--Select Room--</option>');
+		return false;	
+	}
+	
+	var data = {
+		'action': 'get_guesthouse_rooms',
+		'guest_house_id': parseInt(gid_val)
+	};
+	// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+	GHOB_inst.post(ajaxurl, data, function(response) {
+		GHOB_inst('select[name="select_room_sp"]').html('<option value="0" selected="selected">--Select Room--</option>');
+		GHOB_inst('select[name="select_room_sp"]').append(response);
+		GHOB_inst('select[name="select_room_shifted_sp"]').html('<option value="0" selected="selected">--Select Room--</option>');
+		GHOB_inst('select[name="select_room_shifted_sp"]').append(response);
+	});
+}
+
+function sp_get_guests_list(room_id){
+	if(parseInt(room_id)==0){
+		GHOB_inst('select[name="select_room_guest_sp"]').html('<option value="0" selected="selected">--Select Guest--</option>');
+		return false;	
+	}
+	
+	var data = {
+		'action': 'get_guestbybed_room',
+		'ghid_map_id': parseInt(room_id)
+	};
+	// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+	GHOB_inst.post(ajaxurl, data, function(response) {
+		if(response == "No Bookings found"){
+			GHOB_inst('select[name="select_room_guest_sp"]').html('<option value="0" selected="selected">--No Booking yet--</option>');
+		}else{
+			GHOB_inst('select[name="select_room_guest_sp"]').html('<option value="0" selected="selected">--Select Guest--</option>');
+			GHOB_inst('select[name="select_room_guest_sp"]').append(response);
+		}
+	});
+}
+
+function validate_shifting_form(){
+	var shift_guesth_f = GHOB_inst('select[name="selected_guest_house_sp_mov"]').val();
+	var shift_room_f = GHOB_inst('select[name="select_room_sp"]').val(); 
+	var shift_guest_f = GHOB_inst('select[name="select_room_guest_sp"]').val(); 
+	var shift_room_t = GHOB_inst('select[name="select_room_shifted_sp"]').val(); 
+	
+	var output_error = '';
+	
+	if((parseInt(shift_guesth_f) == 0)){
+		output_error += '\nPlease Select Guest House';
+	}
+	if((parseInt(shift_room_f) == 0)){
+		output_error += '\nPlease Select Room';
+	}
+	if((parseInt(shift_guest_f) == 0)){
+		output_error += '\nPlease Select Guest Name';
+	}
+	if((parseInt(shift_room_t) == 0)){
+		output_error += '\nPlease Select Room to Move';
+	}
+	
+	if((parseInt(shift_room_f) != 0)&&((parseInt(shift_room_t) != 0))){
+		if(shift_room_t == shift_room_f){
+			output_error += '\nGuest cannot be shifted in same room';
+		}
+	}
+	
+	if(output_error.length > 0){
+		alert(output_error);
+		return false;
+	}else{
+		return true;
+	}
+}
+
+function shift_current_guest_to_room(){
+	
+	var shift_guesth_f = GHOB_inst('select[name="selected_guest_house_sp_mov"]').val();
+	var shift_room_f = GHOB_inst('select[name="select_room_sp"]').val(); 
+	var shift_guest_f = GHOB_inst('select[name="select_room_guest_sp"]').val(); 
+	var shift_room_t = GHOB_inst('select[name="select_room_shifted_sp"]').val(); 
+	
+	
+	var is_validate_shifting_form = validate_shifting_form();
+	
+	if(is_validate_shifting_form){
+		var data = {
+			'action': 'ghob_shift_guest',
+			'guest_house_id': parseInt(shift_guesth_f),
+			'room_no': parseInt(shift_room_f),
+			'guest_slotid_bookingid':shift_guest_f,
+			'room_to_shift': parseInt(shift_room_t)
+		};
+		// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
+		GHOB_inst.post(ajaxurl, data, function(response) {
+			if(response == 'room_not_empty'){ alert('The selected room for shifting the guest is not vacant.Kindly selecet the new vacant room and try again'); reset_movement_form(); }
+			if(response == 'movement_done_successfully'){ alert('Guest Moved to new room successfully'); reset_movement_form(); }
+			if(response == 'error_movement'){ alert('An unexpected error occured while vhanging rooms, please try again'); reset_movement_form(); }
+		});
+	}
+}
+
+function reset_movement_form(){
+	GHOB_inst('select[name="select_room_guest_sp"]').html('<option value="0" selected="selected">--Select Guest--</option>');
+	GHOB_inst('select[name="select_room_shifted_sp"]').html('<option value="0" selected="selected">--Select Room--</option>');
+	GHOB_inst('select[name="select_room_sp"]').html('<option value="0" selected="selected">--Select Room--</option>');
+	GHOB_inst('select[name="selected_guest_house_sp_mov"]').val('0');
+}
+
 function isDate(txtDate){
   var currVal = txtDate;
   if(currVal == '')

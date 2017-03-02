@@ -22,10 +22,17 @@ class GHOB_admin_components_setup {
 		add_action( 'wp_ajax_locate_city_location', array($this, 'ghob_locate_city_loaction') );
 		add_action( 'wp_ajax_locate_guest_house', array($this, 'ghob_locate_guest_houses') );
 		add_action( 'wp_ajax_ghob_view_availability', array($this, 'ghob_view_availability') );
+		add_action( 'wp_ajax_nopriv_ghob_view_availability', array($this, 'ghob_view_availability') );
 		add_action( 'wp_ajax_ghob_book_slots', array($this, 'ghob_book_slots') );
+		add_action( 'wp_ajax_nopriv_ghob_book_slots', array($this, 'ghob_book_slots') );
 		
 		/*Ajax handler for view occupancy mapping*/
 		add_action( 'wp_ajax_get_guest_house_map', array($this, 'ghob_occupancy_details_guest_house') );
+		
+		/*Ajax handler for special operations*/
+		add_action( 'wp_ajax_get_guesthouse_rooms', array($this, 'ghob_special_op_getrooms') );
+		add_action( 'wp_ajax_get_guestbybed_room', array($this, 'ghob_special_op_getguestbyroom') );
+		add_action( 'wp_ajax_ghob_shift_guest', array($this, 'ghob_shiftRoomByGuest') );
 	}
 	
 	function register_session(){
@@ -55,7 +62,8 @@ class GHOB_admin_components_setup {
 			wp_enqueue_style('manage-reservation-main-page-css', plugins_url( '../../assets/css/admin/manage-reservations-main.css', __FILE__) );
 			
 			/**for datepicker**/
-			wp_enqueue_script('field-date-js','Field_Date.js',array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker'),time(),true);	
+			wp_enqueue_script('field-date-js','Field_Date.js',array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker'),time(),true);
+			wp_register_style('jquery-ui-datepicker', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css');
 			wp_enqueue_style( 'jquery-ui-datepicker' );
 		}
 	}
@@ -124,13 +132,12 @@ class GHOB_admin_components_setup {
 	}
 	
 	function ghob_book_slots(){
+		
+		$GHOB_live_book_obj = new GHOIB_live_booking_operations();
 		if(wp_verify_nonce($_REQUEST['rv_security_key'], 'ghob_book_slots_'.get_current_user_id())){
 			
  			if(isset($_SESSION['available_slots'])){
 				
-				$GHOB_live_book_obj = new GHOIB_live_booking_operations();
-				//create new booking post_type
-				//update the post id to booking table
 				$book_id_post = $GHOB_live_book_obj->create_booking_guest($_POST,$_SESSION['available_slots']);
 				if($book_id_post){  
 					unset($_SESSION['available_slots']);
@@ -141,27 +148,105 @@ class GHOB_admin_components_setup {
 			}
 			
 		}else{
+			if(wp_verify_nonce($_REQUEST['front_booking_nonce'], 'front_end_final_booking_')){
+				if(isset($_COOKIE['slot_array'])){
+					
+					$send_ar_array = array(
+						'rv_guest_entity_to_book' => 'bed',
+						'rv_guest_room_bed_qty' => $_COOKIE['g_room_qty'],
+						'rv_guest_room_type' => $_COOKIE['g_room_type'],
+						'rv_payment_method' => 'Pay on Counter',
+						'rv_ref_no' => 'Booked Via Online Method',
+						'rv_paid_amount' => 0,
+						'rv_guest_checkin' => $_COOKIE['g_checkin'],
+						'rv_guest_checkout' => $_COOKIE['g_checkout'],
+						'rv_guest_name' => $_POST['front_book_guestname'],
+						'rv_guest_email' => $_POST['front_book_guestemail'],
+						'rv_guest_phone' => $_POST['front_book_guestmobile'],
+						'rv_guest_company' => $_POST['front_book_guestcompany'],
+						'rv_guest_address' => $_POST['front_book_guestaddress'],
+					);
+					$ck_slot_ar = unserialize($_COOKIE['slot_array']);
+					$book_id_post = $GHOB_live_book_obj->create_booking_guest($send_ar_array,$ck_slot_ar);
+					if($book_id_post){  
+						if(isset($_COOKIE['slot_array'])){ unset($_COOKIE['slot_array']); }
+						if(isset($_COOKIE['room_price'])){ unset($_COOKIE['room_price']); }
+						if(isset($_COOKIE['g_checkin'])){ unset($_COOKIE['g_checkin']); }
+						if(isset($_COOKIE['g_checkout'])){ unset($_COOKIE['g_checkout']); }
+						if(isset($_COOKIE['g_room_qty'])){ unset($_COOKIE['g_room_qty']); }
+						if(isset($_COOKIE['g_room_type'])){ unset($_COOKIE['g_room_type']); }
+						echo 'booking_success.'.$book_id_post;
+						wp_die();
+					}else{
+						wp_die('booking_unsuccess');
+					}
+				}else{
+					wp_die('No booking slots found! Please re-search again');
+				}
+			}
 			wp_die('Transaction Authentication failed');
 		}
 		wp_die(); // this is required to terminate immediately and return a proper response
 	}
 	
 	function ghob_view_availability() {
+		
+		$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
 			
 		if(wp_verify_nonce($_REQUEST['secret'], 'ghob_check_availability_'.get_current_user_id())){
-			
-			$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
+						
 			$slots_array = $GHOB_live_booking_obj->GHOB_check_rooms_availability($_REQUEST);
 			$check_pricing_of_room = $GHOB_live_booking_obj->GHOB_check_rooms_pricing($_REQUEST);
 			
 			if(count($slots_array)>0){
+				unset($_SESSION['available_slots']);
 				$_SESSION['available_slots'] = $slots_array;
 				echo $check_pricing_of_room;
 			}else{
 				echo 'not_available';
 			}
 		}else{
-			wp_die('Transaction Authentication failed');
+			//check if it is a frontend request
+			if(wp_verify_nonce($_REQUEST['front_user_nonce'], 'front_end_availability_query_')){
+				//prepare array
+				$request_array = array(
+					'guest_house'=> $_POST['front_user_guesthouse'],
+					'checkin'=> $_POST['front_user_checkin'],
+					'checkout'=> $_POST['front_user_checkout'],
+					'no_beds'=> $_POST['front_user_quantity'],
+					'type_of_room'=> $_POST['front_user_roomtype'],
+					'no_rooms' => 0,
+					'city' => 0,
+					'location' => 0
+				);
+				
+				$slots_array = $GHOB_live_booking_obj->GHOB_check_rooms_availability($request_array);
+				$check_pricing_of_room = $GHOB_live_booking_obj->GHOB_check_rooms_pricing($request_array);
+				
+				if(count($slots_array)>0){
+					//set cookie data
+					if(isset($_COOKIE['slot_array'])){ unset($_COOKIE['slot_array']); }
+					if(isset($_COOKIE['room_price'])){ unset($_COOKIE['room_price']); }
+					if(isset($_COOKIE['g_checkin'])){ unset($_COOKIE['g_checkin']); }
+					if(isset($_COOKIE['g_checkout'])){ unset($_COOKIE['g_checkout']); }
+					if(isset($_COOKIE['g_room_qty'])){ unset($_COOKIE['g_room_qty']); }
+					if(isset($_COOKIE['g_room_type'])){ unset($_COOKIE['g_room_type']); }
+					
+					setcookie("slot_array", serialize($slots_array), time() + (86400 * 30), "/");
+					setcookie("room_price", $check_pricing_of_room, time() + (86400 * 30), "/");
+					setcookie("g_checkin", $_POST['front_user_checkin'], time() + (86400 * 30), "/");
+					setcookie("g_checkout", $_POST['front_user_checkout'], time() + (86400 * 30), "/");
+					setcookie("g_room_qty", $_POST['front_user_quantity'], time() + (86400 * 30), "/");
+					setcookie("g_room_type", $_POST['front_user_roomtype'], time() + (86400 * 30), "/");
+					
+					echo 'available';
+				}else{
+					echo 'not_available';
+				}
+				
+			}else{
+				wp_die('Transaction Authentication failed');
+			}
 		}
 		wp_die(); // this is required to terminate immediately and return a proper response
 	}
@@ -287,6 +372,126 @@ class GHOB_admin_components_setup {
 	function get_customer_details_booking_id($booking_id){
 		
 		return array('guest_name' => get_post_meta($booking_id,'guestname',true),'guest_mobile' => get_post_meta($booking_id,'guestphone',true),'checkin'=> get_post_meta($booking_id,'checkindate',true),'checkout'=> get_post_meta($booking_id,'checkoutdate',true));
+	}
+	
+	function ghob_special_op_getrooms(){
+		
+		global $wpdb;
+		$mapping_table = $wpdb->prefix. 'room_mapping';
+		$booking_table = $wpdb->prefix. 'booking_slots';
+		$output_options_room = '';
+		
+		if ( !current_user_can( 'manage_options' ) )  {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
+		
+		$gID = $_POST['guest_house_id'];
+		
+		$ghob_get_rooms = $wpdb->get_results($wpdb->prepare("SELECT * FROM $mapping_table WHERE guest_house_id ='$gID';"));
+		
+		if(count($ghob_get_rooms) > 0){
+			foreach( $ghob_get_rooms as $room) {
+				$output_options_room .= '<option value="'.$room->map_id.'">'. $room->room_name .'</option>';
+			}
+		}
+		echo $output_options_room;
+		wp_die();
+	}
+	
+	function ghob_special_op_getguestbyroom(){
+		global $wpdb;
+		$mapping_table = $wpdb->prefix. 'room_mapping';
+		$booking_table = $wpdb->prefix. 'booking_slots';
+		$output_options_guests = '';
+		$guest_list_counter = 0;
+		
+		if ( !current_user_can( 'manage_options' ) )  {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
+		
+		$mapID = $_POST['ghid_map_id'];
+		
+		$ghob_get_bookings = $wpdb->get_results($wpdb->prepare("SELECT * FROM $booking_table WHERE room_no ='$mapID';"));
+		
+		if(count($ghob_get_bookings) > 0){
+			foreach( $ghob_get_bookings as $booking) {
+				if($booking->booked_status != 0){
+					if(strpos($booking->booked_status, ',') != false){
+						//multiple bookings
+						$bookings_array = explode(',',$booking->booked_status);
+						foreach($bookings_array as $book){
+							if($this->is_displayable_to_map($book)){
+								$guest_name = get_post_meta($book,'guestname',true);
+								$output_options_guests .= '<option value="'.$booking->slot_id.'_g_'.$book.'">'. $guest_name .'</option>';
+								$guest_list_counter++;
+							}
+						}
+					}else{
+						//single booking
+						if($this->is_displayable_to_map($booking->booked_status)){
+							$guest_name = get_post_meta($booking->booked_status,'guestname',true);
+							$output_options_guests .= '<option value="'.$booking->slot_id.'_g_'.$booking->booked_status.'">'. $guest_name .'</option>';
+							$guest_list_counter++;
+						}
+					}
+				}
+			}
+		}else{
+			$output_options_guests .= 'No Booking Slots Found! kindly generate rooms first';
+		}
+		
+		if($guest_list_counter > 0){
+			echo $output_options_guests;
+			wp_die();
+		}else{
+			$output_options_guests .= 'No Bookings found';
+		}
+		echo $output_options_guests;
+		wp_die();
+	}
+	
+	function ghob_shiftRoomByGuest(){
+		if ( !current_user_can( 'manage_options' ) )  {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
+		
+		$room_shifted_to = $_POST['room_to_shift'];
+		
+		$mixed_val_slotid_bookingid = $_POST['guest_slotid_bookingid'];
+		$mixed_val_slotid_bookingid = explode('_g_',$mixed_val_slotid_bookingid);
+		$guest_slot_id = $mixed_val_slotid_bookingid[0];
+		$guest_booking_id = $mixed_val_slotid_bookingid[1];
+		$guest_checkout = get_post_meta($guest_booking_id ,'checkoutdate',true);
+		$guest_checkin = get_post_meta($guest_booking_id ,'checkindate',true);
+		
+		$guesth_id = $_POST['guest_house_id'];
+		$shifting_room = $_POST['room_to_shift'];
+		
+		$is_slot_available = $this->check_slots_available_by_room($guesth_id,$guest_checkin,$guest_checkout,$shifting_room);
+		
+		if(!$is_slot_available){ echo 'room_not_empty'; }else{
+			
+			$movement_st = $this->move_guest_to_newlocation($is_slot_available,$guest_booking_id,$guest_slot_id);
+			if($movement_st){ echo 'movement_done_successfully'; }else{ echo 'error_movement';}
+		}
+		wp_die();
+	}
+	
+	function check_slots_available_by_room($guest_house_id,$g_checkin,$g_checkout,$room_no_to_shift){
+
+		$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
+		$is_available = $GHOB_live_booking_obj->available_room_for_shifting($guest_house_id,$g_checkin,$g_checkout,$room_no_to_shift);
+		if($is_available){
+			return $is_available;
+		}else{
+			return false;
+		}
+	}
+	
+	function move_guest_to_newlocation($slot_new_id,$guest_booking_id,$slot_old_id){
+		$GHOB_live_booking_obj = new GHOIB_live_booking_operations();
+		$move_status = $GHOB_live_booking_obj->move_guest_to_new_room($slot_new_id,$guest_booking_id,$slot_old_id);
+		return $move_status;
 	}
 }
 
