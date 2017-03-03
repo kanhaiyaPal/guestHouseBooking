@@ -190,7 +190,7 @@ GHOB_inst( document ).ready(function() {
 
 			for (var i = 0; i < attachments.length; i++) {
 				var attachment = attachments[i];
-				var url = attachment.url.replace(hotel_settings.upload_base_url, '');
+				//var url = attachment.url.replace(hotel_settings.upload_base_url, '');
 				html += '<li class="attachment">';
 				html += '<div class="attachment-preview">';
 				html += '<div class="thumbnail">';

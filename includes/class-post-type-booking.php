@@ -21,8 +21,12 @@ class GHOB_post_type_booking_init {
 		
 		/*Save custom checkout data*/
 		add_action( 'save_post', array( $this, 'add_custom_checkout_date'), 10, 2 ); 
+		
+		/*Delete Post Id from booking table also once removed from wordpress*/
+		add_action( 'before_delete_post', array( $this, 'delete_post_id_booked_status') );
 
 	}
+	
 	
 	function create_bookings_post()
 	{
@@ -253,6 +257,19 @@ class GHOB_post_type_booking_init {
 			if ( isset( $_POST['early_checkout_date'] ) && $_POST['early_checkout_date'] != '' ) {
 				update_post_meta( $booking_id, 'checkoutdate', $_POST['early_checkout_date'] );
 			}
+		}
+	}
+	
+	function delete_post_id_booked_status($postid){
+		global $post_type;   
+		if ( $post_type != 'booking' ) return;
+		
+		global $wpdb;
+		$booking_table = $wpdb->prefix . 'booking_slots';
+		
+		$search_q = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $booking_table WHERE booked_status LIKE '%$postid%'" ) );
+		if(count($search_q)>0){
+			
 		}
 	}
 }

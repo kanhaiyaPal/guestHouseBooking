@@ -166,7 +166,10 @@ class GHOB_admin_components_setup {
 						'rv_guest_company' => $_POST['front_book_guestcompany'],
 						'rv_guest_address' => $_POST['front_book_guestaddress'],
 					);
-					$ck_slot_ar = unserialize($_COOKIE['slot_array']);
+					
+					$ck_slot_ar = stripslashes($_COOKIE['slot_array']);
+					$ck_slot_ar = json_decode($ck_slot_ar, true);
+
 					$book_id_post = $GHOB_live_book_obj->create_booking_guest($send_ar_array,$ck_slot_ar);
 					if($book_id_post){  
 						if(isset($_COOKIE['slot_array'])){ unset($_COOKIE['slot_array']); }
@@ -232,7 +235,7 @@ class GHOB_admin_components_setup {
 					if(isset($_COOKIE['g_room_qty'])){ unset($_COOKIE['g_room_qty']); }
 					if(isset($_COOKIE['g_room_type'])){ unset($_COOKIE['g_room_type']); }
 					
-					setcookie("slot_array", serialize($slots_array), time() + (86400 * 30), "/");
+					setcookie("slot_array", json_encode($slots_array), time() + (86400 * 30), "/");
 					setcookie("room_price", $check_pricing_of_room, time() + (86400 * 30), "/");
 					setcookie("g_checkin", $_POST['front_user_checkin'], time() + (86400 * 30), "/");
 					setcookie("g_checkout", $_POST['front_user_checkout'], time() + (86400 * 30), "/");
